@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Register – TechySpot IMS{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-brand-panel">
+        <div class="brand-content">
+            <div class="brand-logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">TechySpot</span>
+            </div>
+            <h1 class="brand-headline">Intern Management<br>System</h1>
+            <p class="brand-sub">Your gateway to a structured and rewarding internship experience.</p>
+            <div class="brand-features">
+                <div class="feature-item"><span>🎯</span> Track your progress</div>
+                <div class="feature-item"><span>📊</span> Manage your profile</div>
+                <div class="feature-item"><span>🤝</span> Connect with your team</div>
+            </div>
+        </div>
+        <div class="brand-shape"></div>
+    </div>
+    <div class="auth-form-panel">
+        <div class="auth-form-container">
+            <div class="auth-header">
+                <h2>Create Account</h2>
+                <p>Join the TechySpot intern portal</p>
+            </div>
+            <form method="post" class="auth-form" id="registerForm" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_full_name">Full Name</label>
+                    {{ form.full_name }}
+                    {% if form.full_name.errors %}<span class="field-error">{{ form.full_name.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_email">Official Email</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_department">Department / Stream</label>
+                    {{ form.department }}
+                    {% if form.department.errors %}<span class="field-error">{{ form.department.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_password1">Password</label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}<span class="field-error">{{ form.password1.errors.0 }}</span>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_password2">Confirm Password</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}<span class="field-error">{{ form.password2.errors.0 }}</span>{% endif %}
+                    </div>
+                </div>
+                {% if form.non_field_errors %}
+                <div class="form-error-box">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div class="info-banner">
+                    <span>🔔</span>
+                    <span>Your account will be reviewed by HR. You'll receive your Employee ID upon approval.</span>
+                </div>
+                <button type="submit" class="btn-primary btn-full" id="registerBtn">
+                    <span>Create Account</span>
+                    <span class="btn-arrow">→</span>
+                </button>
+            </form>
+            <p class="auth-switch">Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

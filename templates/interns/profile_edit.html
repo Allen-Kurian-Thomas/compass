@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}{{ section }} – TechySpot IMS{% endblock %}
+{% block body_class %}edit-page{% endblock %}
+
+{% block content %}
+<div class="edit-wrapper">
+    <div class="edit-container">
+        <div class="edit-header">
+            <a href="{% url 'dashboard' %}" class="back-btn">← Back to Dashboard</a>
+            <div class="edit-title">
+                <span class="edit-icon">{{ section_icon }}</span>
+                <h2>{{ section }}</h2>
+            </div>
+            <p class="edit-subtitle">Keep your information up to date for accurate records.</p>
+        </div>
+        <form method="post" enctype="multipart/form-data" class="edit-form">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<span class="help-text">{{ field.help_text }}</span>{% endif %}
+                {% if field.errors %}<span class="field-error">{{ field.errors.0 }}</span>{% endif %}
+            </div>
+            {% endfor %}
+            {% if form.non_field_errors %}
+            <div class="form-error-box">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="edit-actions">
+                <a href="{% url 'dashboard' %}" class="btn-outline">Cancel</a>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

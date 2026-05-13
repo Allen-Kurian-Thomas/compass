@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard – TechySpot IMS{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="brand-logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">TechySpot</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#overview" class="nav-item active" onclick="showSection('overview', this)">
+                <span class="nav-icon">🏠</span><span class="nav-label">Overview</span>
+            </a>
+            <a href="#personal" class="nav-item" onclick="showSection('personal', this)">
+                <span class="nav-icon">👤</span><span class="nav-label">Personal</span>
+            </a>
+            <a href="#contact" class="nav-item" onclick="showSection('contact', this)">
+                <span class="nav-icon">📞</span><span class="nav-label">Contact</span>
+            </a>
+            <a href="#professional" class="nav-item" onclick="showSection('professional', this)">
+                <span class="nav-icon">💼</span><span class="nav-label">Professional</span>
+            </a>
+            <a href="#financial" class="nav-item" onclick="showSection('financial', this)">
+                <span class="nav-icon">🏦</span><span class="nav-label">Financial</span>
+            </a>
+            <a href="#statutory" class="nav-item" onclick="showSection('statutory', this)">
+                <span class="nav-icon">📋</span><span class="nav-label">Statutory</span>
+            </a>
+            <a href="#family" class="nav-item" onclick="showSection('family', this)">
+                <span class="nav-icon">👨‍👩‍👧</span><span class="nav-label">Family</span>
+            </a>
+            <a href="#education" class="nav-item" onclick="showSection('education', this)">
+                <span class="nav-icon">🎓</span><span class="nav-label">Education</span>
+            </a>
+            <a href="#certifications" class="nav-item" onclick="showSection('certifications', this)">
+                <span class="nav-icon">🏆</span><span class="nav-label">Certifications</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="nav-item nav-logout">
+                <span class="nav-icon">🚪</span><span class="nav-label">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+            <div class="topbar-title" id="topbarTitle">Overview</div>
+            <div class="topbar-right">
+                <div class="user-chip">
+                    <div class="user-avatar">{{ intern.full_name|first|upper }}</div>
+                    <span>{{ intern.first_name }}</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+
+            <!-- OVERVIEW SECTION -->
+            <section class="dash-section active" id="section-overview">
+                <!-- Profile Hero Card -->
+                <div class="profile-hero">
+                    <div class="profile-avatar-wrap">
+                        {% if intern.profile_photo %}
+                        <img src="{{ intern.profile_photo.url }}" alt="Profile Photo" class="profile-avatar-img">
+                        {% else %}
+                        <div class="profile-avatar-placeholder">{{ intern.full_name|first|upper }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="profile-info">
+                        <h2>{{ intern.full_name }}</h2>
+                        <p class="profile-email">{{ intern.email }}</p>
+                        <div class="profile-tags">
+                            {% if intern.employee_id %}
+                            <span class="badge badge-blue">{{ intern.employee_id }}</span>
+                            {% endif %}
+                            <span class="badge badge-{% if intern.status == 'approved' %}green{% elif intern.status == 'pending' %}yellow{% else %}red{% endif %}">
+                                {{ intern.get_status_display }}
+                            </span>
+                            {% if intern.department %}
+                            <span class="badge badge-purple">{{ intern.get_department_display }}</span>
+                            {% endif %}
+                        </div>
+                        {% if intern.designation %}<p class="profile-designation">{{ intern.designation }}</p>{% endif %}
+                    </div>
+                    <div class="profile-actions">
+                        <a href="{% url 'edit_personal' %}" class="btn-outline">Edit Profile</a>
+                    </div>
+                </div>
+
+                <!-- Profile Completion -->
+                <div class="completion-card">
+                    <div class="completion-header">
+                        <span>Profile Completion</span>
+                        <span class="completion-pct">{{ completion }}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ completion }}%"></div>
+                    </div>
+                    <p class="completion-hint">Complete your profile to unlock all features.</p>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Date of Joining</span>
+                            <span class="stat-value">{{ intern.date_of_joining|date:"d M Y" }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎓</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Education Records</span>
+                            <span class="stat-value">{{ educations.count }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Certifications</span>
+                            <span class="stat-value">{{ certifications.count }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💡</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Skills Listed</span>
+                            <span class="stat-value">{{ skills|length }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills Preview -->
+                {% if skills %}
+                <div class="info-card">
+                    <div class="info-card-header"><span>💡 Technical Skills</span></div>
+                    <div class="skills-tags">
+                        {% for skill in skills %}<span class="skill-tag">{{ skill }}</span>{% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+
+            <!-- PERSONAL SECTION -->
+            <section class="dash-section" id="section-personal">
+                <div class="section-header-row">
+                    <h3>👤 Personal Information</h3>
+                    <a href="{% url 'edit_personal' %}" class="btn-outline btn-sm">Edit</a>
+                </div>
+                <div class="info-card">
+                    <div class="info-grid">
+                        <div class="info-item"><span class="info-label">Date of Birth</span><span class="info-value">{{ intern.date_of_birth|date:"d M Y"|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Gender</span><span class="info-value">{{ intern.get_gender_display|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Blood Group</span><span class="info-value">{{ intern.blood_group|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Marital Status</span><span class="info-value">{{ intern.get_marital_status_display|default:"—" }}</span></div>
+                    </div>
+                    {% if intern.bio %}<div class="info-bio"><strong>Bio:</strong> {{ intern.bio }}</div>{% endif %}
+                </div>
+            </section>
+
+            <!-- CONTACT SECTION -->
+            <section class="dash-section" id="section-contact">
+                <div class="section-header-row">
+                    <h3>📞 Contact Information</h3>
+                    <a href="{% url 'edit_contact' %}" class="btn-outline btn-sm">Edit</a>
+                </div>
+                <div class="info-card">
+                    <div class="info-grid">
+                        <div class="info-item"><span class="info-label">Phone</span><span class="info-value">{{ intern.personal_phone|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Skype ID</span><span class="info-value">{{ intern.skype_id|default:"—" }}</span></div>
+                        <div class="info-item full-width"><span class="info-label">Current Address</span><span class="info-value">{{ intern.current_address|default:"—" }}</span></div>
+                        <div class="info-item full-width"><span class="info-label">Permanent Address</span><span class="info-value">{{ intern.permanent_address|default:"—" }}</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROFESSIONAL SECTION -->
+            <section class="dash-section" id="section-professional">
+                <div class="section-header-row">
+                    <h3>💼 Professional Information</h3>
+                    <a href="{% url 'edit_professional' %}" class="btn-outline btn-sm">Edit</a>
+                </div>
+                <div class="info-card">
+                    <div class="info-grid">
+                        <div class="info-item"><span class="info-label">Designation</span><span class="info-value">{{ intern.designation|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Department</span><span class="info-value">{{ intern.get_department_display|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Reporting Manager</span><span class="info-value">{{ intern.reporting_manager|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Primary Unit</span><span class="info-value">{{ intern.primary_unit|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Total Experience</span><span class="info-value">{{ intern.total_experience|default:"—" }}</span></div>
+                    </div>
+                    {% if skills %}
+                    <div class="skills-section">
+                        <span class="info-label">Technical Skills</span>
+                        <div class="skills-tags mt-1">{% for s in skills %}<span class="skill-tag">{{ s }}</span>{% endfor %}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- FINANCIAL SECTION -->
+            <section class="dash-section" id="section-financial">
+                <div class="section-header-row">
+                    <h3>🏦 Financial Information</h3>
+                    <a href="{% url 'edit_financial' %}" class="btn-outline btn-sm">Edit</a>
+                </div>
+                <div class="info-card">
+                    <div class="sensitive-notice">🔒 This information is confidential and securely stored.</div>
+                    <div class="info-grid">
+                        <div class="info-item"><span class="info-label">Bank Name</span><span class="info-value">{{ intern.bank_name|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Account Number</span><span class="info-value">{% if intern.account_number %}••••{{ intern.account_number|slice:"-4:" }}{% else %}—{% endif %}</span></div>
+                        <div class="info-item"><span class="info-label">IFSC Code</span><span class="info-value">{{ intern.ifsc_code|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">PAN Number</span><span class="info-value">{% if intern.pan_number %}{{ intern.pan_number|slice:":3" }}•••••{% else %}—{% endif %}</span></div>
+                        <div class="info-item"><span class="info-label">Aadhaar</span><span class="info-value">{% if intern.aadhaar_number %}••••-••••-{{ intern.aadhaar_number|slice:"-4:" }}{% else %}—{% endif %}</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATUTORY SECTION -->
+            <section class="dash-section" id="section-statutory">
+                <div class="section-header-row">
+                    <h3>📋 Statutory Information</h3>
+                    <a href="{% url 'edit_statutory' %}" class="btn-outline btn-sm">Edit</a>
+                </div>
+                <div class="info-card">
+                    <div class="info-grid">
+                        <div class="info-item"><span class="info-label">PF UAN</span><span class="info-value">{{ intern.pf_uan|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">PF Account Number</span><span class="info-value">{{ intern.pf_account_number|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Passport Number</span><span class="info-value">{{ intern.passport_number|default:"—" }}</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAMILY SECTION -->
+            <section class="dash-section" id="section-family">
+                <div class="section-header-row">
+                    <h3>👨‍👩‍👧 Family & Emergency Contacts</h3>
+                    <a href="{% url 'edit_family' %}" class="btn-outline btn-sm">Edit</a>
+                </div>
+                <div class="info-card">
+                    <div class="info-grid">
+                        <div class="info-item"><span class="info-label">Father's Name</span><span class="info-value">{{ intern.father_name|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Mother's Name</span><span class="info-value">{{ intern.mother_name|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Emergency Contact</span><span class="info-value">{{ intern.emergency_contact_name|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Relation</span><span class="info-value">{{ intern.emergency_contact_relation|default:"—" }}</span></div>
+                        <div class="info-item"><span class="info-label">Emergency Phone</span><span class="info-value">{{ intern.emergency_contact_phone|default:"—" }}</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EDUCATION SECTION -->
+            <section class="dash-section" id="section-education">
+                <div class="section-header-row">
+                    <h3>🎓 Education</h3>
+                    <a href="{% url 'add_education' %}" class="btn-primary btn-sm">+ Add</a>
+                </div>
+                {% for edu in educations %}
+                <div class="info-card edu-card">
+                    <div class="edu-header">
+                        <div>
+                            <div class="edu-degree">{{ edu.degree }}{% if edu.field_of_study %} in {{ edu.field_of_study }}{% endif %}</div>
+                            <div class="edu-college">{{ edu.college_name }}</div>
+                        </div>
+                        <div class="edu-meta">
+                            <span class="badge badge-blue">{{ edu.year_of_passing }}</span>
+                            <a href="{% url 'delete_education' edu.pk %}" class="btn-danger-sm" onclick="return confirm('Remove this record?')">✕</a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">No education records added yet. <a href="{% url 'add_education' %}">Add one</a>.</div>
+                {% endfor %}
+            </section>
+
+            <!-- CERTIFICATIONS SECTION -->
+            <section class="dash-section" id="section-certifications">
+                <div class="section-header-row">
+                    <h3>🏆 Certifications</h3>
+                    <a href="{% url 'add_certification' %}" class="btn-primary btn-sm">+ Add</a>
+                </div>
+                {% for cert in certifications %}
+                <div class="info-card cert-card">
+                    <div class="cert-header">
+                        <div>
+                            <div class="cert-name">{{ cert.name }}</div>
+                            <div class="cert-platform">{{ cert.platform }}{% if cert.issued_date %} · {{ cert.issued_date|date:"M Y" }}{% endif %}</div>
+                        </div>
+                        <div class="cert-meta">
+                            {% if cert.credential_url %}<a href="{{ cert.credential_url }}" target="_blank" class="btn-outline btn-sm">View</a>{% endif %}
+                            <a href="{% url 'delete_certification' cert.pk %}" class="btn-danger-sm" onclick="return confirm('Remove this certification?')">✕</a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">No certifications added yet. <a href="{% url 'add_certification' %}">Add one</a>.</div>
+                {% endfor %}
+            </section>
+
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function showSection(id, el) {
+    document.querySelectorAll('.dash-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    el.classList.add('active');
+    document.getElementById('topbarTitle').textContent = el.querySelector('.nav-label').textContent;
+    if (window.innerWidth < 768) closeSidebar();
+    return false;
+}
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+}
+
+// Animate progress bar on load
+window.addEventListener('load', () => {
+    const fill = document.querySelector('.progress-fill');
+    if (fill) {
+        const target = fill.style.width;
+        fill.style.width = '0';
+        setTimeout(() => { fill.style.width = target; }, 200);
+    }
+});
+
+// Handle hash on load
+window.addEventListener('DOMContentLoaded', () => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+        const link = document.querySelector(`.nav-item[href="#${hash}"]`);
+        if (link) showSection(hash, link);
+    }
+});
+</script>
+{% endblock %}
