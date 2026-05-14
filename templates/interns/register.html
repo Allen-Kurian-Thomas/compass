@@ -1,74 +1,247 @@
 {% extends 'base.html' %}
-{% block title %}Register – TechySpot IMS{% endblock %}
-{% block body_class %}auth-page{% endblock %}
+{% block title %}Employee Registration{% endblock %}
+{% block body_class %}corp-auth-bg{% endblock %}
+
+{% block extra_head %}
+<style>
+    body.corp-auth-bg {
+        background-color: #fafafa;
+        color: #1a1a1a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+        padding: 40px 20px;
+    }
+    .corp-card {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        padding: 40px;
+        width: 100%;
+        max-width: 480px;
+        box-sizing: border-box;
+    }
+    .corp-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .corp-header h1 {
+        font-size: 24px;
+        color: #0f172a;
+        margin: 0 0 8px 0;
+        font-weight: 700;
+    }
+    .corp-header p {
+        color: #64748b;
+        font-size: 14px;
+        margin: 0;
+    }
+    .corp-form-group {
+        margin-bottom: 20px;
+    }
+    .corp-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 8px;
+    }
+    .corp-input-wrap {
+        position: relative;
+    }
+    .corp-input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #334155;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+        background: #ffffff;
+    }
+    .corp-input:focus {
+        outline: none;
+        border-color: #345e37;
+    }
+    .corp-input::placeholder {
+        color: #94a3b8;
+    }
+    .corp-input.with-icon {
+        padding-right: 40px;
+    }
+    .corp-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #345e37;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .corp-icon-lock {
+        color: #64748b;
+    }
+    .corp-input-disabled {
+        background-color: #f8fafc;
+        color: #64748b;
+        cursor: not-allowed;
+    }
+    .corp-helper {
+        display: block;
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 6px;
+    }
+    select.corp-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px;
+    }
+    .corp-btn {
+        width: 100%;
+        padding: 12px;
+        background-color: #345e37;
+        color: #ffffff;
+        border: none;
+        border-radius: 4px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-top: 10px;
+    }
+    .corp-btn:hover {
+        background-color: #2a4c2c;
+    }
+    .corp-btn-outline {
+        background-color: #ffffff;
+        color: #0f172a;
+        border: 1px solid #cbd5e1;
+        margin-top: 12px;
+    }
+    .corp-btn-outline:hover {
+        background-color: #f8fafc;
+    }
+    .field-error { font-size: 12px; color: #dc2626; margin-top: 4px; display: block; }
+    .form-error-box { background: #fef2f2; color: #dc2626; padding: 10px; border-radius: 4px; font-size: 13px; margin-bottom: 15px; border: 1px solid #fca5a5; }
+    .corp-page-footer {
+        margin-top: 40px;
+        text-align: center;
+        font-size: 13px;
+        color: #64748b;
+    }
+    .corp-page-footer-links {
+        margin-bottom: 12px;
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+    }
+    .corp-page-footer-links a {
+        color: #64748b;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .corp-page-footer-links a:hover {
+        color: #334155;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-    <div class="auth-brand-panel">
-        <div class="brand-content">
-            <div class="brand-logo">
-                <span class="logo-icon">⚡</span>
-                <span class="logo-text">TechySpot</span>
+<div class="corp-card">
+    <div class="corp-header">
+        <h1>Employee Registration</h1>
+        <p>Please complete your corporate profile to proceed.</p>
+    </div>
+    <form method="post" id="registerForm" novalidate>
+        {% csrf_token %}
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_full_name">Full Name</label>
+            <input type="text" name="full_name" class="corp-input" placeholder="Jane Doe" required id="id_full_name" value="{{ form.full_name.value|default:'' }}">
+            {% if form.full_name.errors %}<span class="field-error">{{ form.full_name.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_email">Official Email</label>
+            <div class="corp-input-wrap">
+                <input type="email" name="email" class="corp-input with-icon" placeholder="jane.doe@company.com" required id="id_email" value="{{ form.email.value|default:'' }}">
+                <div class="corp-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#345e37"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </div>
             </div>
-            <h1 class="brand-headline">Intern Management<br>System</h1>
-            <p class="brand-sub">Your gateway to a structured and rewarding internship experience.</p>
-            <div class="brand-features">
-                <div class="feature-item"><span>🎯</span> Track your progress</div>
-                <div class="feature-item"><span>📊</span> Manage your profile</div>
-                <div class="feature-item"><span>🤝</span> Connect with your team</div>
+            {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_password1">Password</label>
+            <div class="corp-input-wrap">
+                <input type="password" name="password1" class="corp-input with-icon" placeholder="••••••••" required id="id_password1">
+                <div class="corp-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#345e37"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </div>
+            </div>
+            <span class="corp-helper">Min 8 chars, mixed case, numbers, special characters.</span>
+            {% if form.password1.errors %}<span class="field-error">{{ form.password1.errors.0 }}</span>{% endif %}
+        </div>
+        
+        <!-- Hidden confirm password to satisfy django form backend -->
+        <input type="hidden" name="password2" id="id_password2">
+        
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_date_of_joining">Date of Joining</label>
+            <div class="corp-input-wrap">
+                <!-- Getting today's date formatted -->
+                {% now "m/d/Y" as today_date %}
+                <input type="text" class="corp-input with-icon corp-input-disabled" value="{{ today_date }}" disabled id="id_date_of_joining">
+                <div class="corp-icon corp-icon-lock">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </div>
             </div>
         </div>
-        <div class="brand-shape"></div>
-    </div>
-    <div class="auth-form-panel">
-        <div class="auth-form-container">
-            <div class="auth-header">
-                <h2>Create Account</h2>
-                <p>Join the TechySpot intern portal</p>
-            </div>
-            <form method="post" class="auth-form" id="registerForm" novalidate>
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="id_full_name">Full Name</label>
-                    {{ form.full_name }}
-                    {% if form.full_name.errors %}<span class="field-error">{{ form.full_name.errors.0 }}</span>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="id_email">Official Email</label>
-                    {{ form.email }}
-                    {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="id_department">Department / Stream</label>
-                    {{ form.department }}
-                    {% if form.department.errors %}<span class="field-error">{{ form.department.errors.0 }}</span>{% endif %}
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="id_password1">Password</label>
-                        {{ form.password1 }}
-                        {% if form.password1.errors %}<span class="field-error">{{ form.password1.errors.0 }}</span>{% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="id_password2">Confirm Password</label>
-                        {{ form.password2 }}
-                        {% if form.password2.errors %}<span class="field-error">{{ form.password2.errors.0 }}</span>{% endif %}
-                    </div>
-                </div>
-                {% if form.non_field_errors %}
-                <div class="form-error-box">{{ form.non_field_errors }}</div>
-                {% endif %}
-                <div class="info-banner">
-                    <span>🔔</span>
-                    <span>Your account will be reviewed by HR. You'll receive your Employee ID upon approval.</span>
-                </div>
-                <button type="submit" class="btn-primary btn-full" id="registerBtn">
-                    <span>Create Account</span>
-                    <span class="btn-arrow">→</span>
-                </button>
-            </form>
-            <p class="auth-switch">Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
+        
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_department">Department / Stream</label>
+            <select name="department" class="corp-input" required id="id_department">
+                <option value="" {% if not form.department.value %}selected{% endif %}>Select Department</option>
+                {% for value, name in form.fields.department.choices %}
+                    {% if value %}
+                    <option value="{{ value }}" {% if form.department.value == value %}selected{% endif %}>{{ name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            {% if form.department.errors %}<span class="field-error">{{ form.department.errors.0 }}</span>{% endif %}
         </div>
-    </div>
+        
+        {% if form.non_field_errors %}
+        <div class="form-error-box">{{ form.non_field_errors }}</div>
+        {% endif %}
+        
+        <button type="submit" class="corp-btn" id="registerBtn">Register</button>
+        <a href="{% url 'login' %}"><button type="button" class="corp-btn corp-btn-outline" style="width: 100%;">Cancel</button></a>
+    </form>
 </div>
+
+<div class="corp-page-footer">
+    <div class="corp-page-footer-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Contact Support</a>
+    </div>
+    <div>&copy; 2024 Corporate Systems. All rights reserved.</div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Sync password1 to password2 before submit
+    document.getElementById('registerForm').addEventListener('submit', function() {
+        document.getElementById('id_password2').value = document.getElementById('id_password1').value;
+    });
+</script>
 {% endblock %}
