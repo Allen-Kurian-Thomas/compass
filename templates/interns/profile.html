@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Employee Portal - Profile{% endblock %}
+{% block body_class %}portal-bg{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/employee-portal.css' %}?v=2">
+{% endblock %}
+
+{% block content %}
+<div class="portal-layout">
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+        <div class="portal-brand">
+            <h1>Employee<br>Portal</h1>
+            <p>Institutional Access</p>
+        </div>
+        <nav class="portal-nav">
+            <a href="{% url 'home' %}">
+                <span class="nav-icon">🏠</span> Home
+            </a>
+            <a href="{% url 'profile' %}" class="active">
+                <span class="nav-icon">👤</span> Profile
+            </a>
+            <a href="#">
+                <span class="nav-icon">🏢</span> Department
+            </a>
+            <a href="#">
+                <span class="nav-icon">⚙️</span> Settings
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main" style="padding-top: 32px;">
+        <!-- Hero Card -->
+        <div class="portal-card profile-hero-card" style="flex-direction: row; margin-bottom: 24px; padding: 20px 24px;">
+            <div class="profile-hero-left" style="display:flex; align-items:center; gap:20px;">
+                {% if request.user.profile_photo %}
+                    <img src="{{ request.user.profile_photo.url }}" alt="Profile Photo" class="profile-hero-avatar" style="width:72px; height:72px; border-radius:8px; border:1px solid #e2e8f0; padding:3px; box-sizing:border-box;">
+                {% else %}
+                    <div class="profile-hero-avatar" style="width:72px; height:72px; border-radius:8px; border:1px solid #e2e8f0; display:flex;align-items:center;justify-content:center;font-size:24px;color:white;background:#1e293b;font-weight:bold;">
+                        {{ request.user.first_name|first }}{{ request.user.last_name|first }}
+                    </div>
+                {% endif %}
+                <div class="profile-hero-info">
+                    <h2 style="font-size:26px; font-weight:700; color:#0f172a; margin:0 0 6px 0; letter-spacing:-0.5px;">{{ request.user.first_name|default:"Sarah" }} {{ request.user.last_name|default:"Jenkins" }}</h2>
+                    <p style="font-size:14px; color:#64748b; margin:0;">{{ request.user.designation|default:"Senior Systems Architect" }} • {{ request.user.get_department_display|default:"Technology Div." }}</p>
+                </div>
+            </div>
+            <div>
+                <a href="{% url 'update_profile' %}" class="portal-btn" style="display:inline-flex; align-items:center; gap:6px; width:auto; padding: 8px 16px; background-color:#325c35; color:white; border-radius:4px; font-size:13px; font-weight:600; text-decoration:none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    Update Profile
+                </a>
+            </div>
+        </div>
+
+        <div class="profile-columns">
+            <!-- Column 1 -->
+            <div class="profile-column">
+                <!-- About Me -->
+                <div class="portal-card">
+                    <div class="info-card-header">
+                        <span class="nav-icon">ⓘ</span> About Me
+                    </div>
+                    <p style="margin:0; font-size:13px; color:#475569; line-height:1.6;">
+                        {{ request.user.bio|default:"Passionate systems architect with over 8 years of experience in designing scalable backend infrastructure. Committed to building resilient applications and mentoring junior developers within the Technology Division." }}
+                    </p>
+                </div>
+
+                <!-- Contact -->
+                <div class="portal-card">
+                    <div class="info-card-header">
+                        <span class="nav-icon">📇</span> Contact
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Personal Phone</span>
+                        <span class="info-value">{{ request.user.personal_phone|default:"+1 (555) 283-9102" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Skype ID</span>
+                        <span class="info-value">{{ request.user.skype_id|default:"sarah.j.tech" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Current Address</span>
+                        <span class="info-value" style="white-space:pre-line;">{{ request.user.current_address|default:"4120 Tech Boulevard, Apt 3B\nSeattle, WA 98109" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Permanent Address</span>
+                        <span class="info-value" style="white-space:pre-line;">{{ request.user.permanent_address|default:"Same as Current" }}</span>
+                    </div>
+                </div>
+
+                <!-- Family & Emergency -->
+                <div class="portal-card">
+                    <div class="info-card-header">
+                        <span class="nav-icon">👨‍👩‍👧</span> Family & Emergency
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Father's Name</span>
+                        <span class="info-value">{{ request.user.father_name|default:"Robert Jenkins" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Mother's Name</span>
+                        <span class="info-value">{{ request.user.mother_name|default:"Martha Jenkins" }}</span>
+                    </div>
+                    <div class="emergency-box">
+                        <span class="info-label" style="color:#dc2626; display:flex; align-items:center; gap:4px; font-weight:700;"><span style="font-size:10px;">✱</span> Emergency Contact</span>
+                        <span class="info-value" style="display:block; margin-bottom:4px; font-weight:500;">{{ request.user.emergency_contact_name|default:"Michael Jenkins (Spouse)" }}</span>
+                        <span class="info-value" style="font-weight:500;">{{ request.user.emergency_contact_phone|default:"+1 (555) 839-2011" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 2 -->
+            <div class="profile-column">
+                <!-- Professional -->
+                <div class="portal-card">
+                    <div class="info-card-header">
+                        <span class="nav-icon">💼</span> Professional
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Designation</span>
+                        <span class="info-value">{{ request.user.designation|default:"Senior Systems Architect" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Primary Unit</span>
+                        <span class="info-value">{{ request.user.primary_unit|default:"Core Infrastructure Platform" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Reporting Manager</span>
+                        <span class="info-value" style="display:flex; align-items:center; gap:4px;"><span style="color:#64748b; font-size:14px;">👤</span> {{ request.user.reporting_manager|default:"David Chen (VP of Engineering)" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Total Experience</span>
+                        <span class="info-value">{{ request.user.total_experience|default:"8 Years, 4 Months" }}</span>
+                    </div>
+                </div>
+
+                <!-- Skills & Education -->
+                <div class="portal-card">
+                    <div class="info-card-header">
+                        <span class="nav-icon">🎓</span> Skills & Education
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Technical Skills</span>
+                        <div style="margin-top:8px;">
+                            {% if skills %}
+                                {% for skill in skills %}
+                                    <span class="skill-pill">{{ skill }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="skill-pill">Python</span>
+                                <span class="skill-pill">Django</span>
+                                <span class="skill-pill">AWS</span>
+                                <span class="skill-pill">PostgreSQL</span>
+                                <span class="skill-pill">Kubernetes</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-group" style="margin-top:24px;">
+                        <span class="info-label">Education</span>
+                        <div style="margin-top:8px;">
+                        {% if educations %}
+                            {% for edu in educations %}
+                            <div style="margin-bottom:12px; display:flex; align-items:flex-start; gap:8px;">
+                                <span style="font-size:16px;">🎓</span>
+                                <div>
+                                    <span class="info-value" style="display:block;">{{ edu.degree }}</span>
+                                    <span style="font-size:11px; color:#64748b;">{{ edu.college_name }} • {{ edu.year_of_passing }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="margin-bottom:12px; display:flex; align-items:flex-start; gap:8px;">
+                                <span style="font-size:16px; color:#475569;">🎓</span>
+                                <div>
+                                    <span class="info-value" style="display:block;">M.S. Computer Science</span>
+                                    <span style="font-size:11px; color:#64748b;">University of Washington • 2016</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-group" style="margin-top:24px;">
+                        <span class="info-label">Certifications</span>
+                        <div style="margin-top:8px;">
+                        {% if certifications %}
+                            {% for cert in certifications %}
+                                <div class="cert-item">
+                                    <span class="icon">✅</span>
+                                    {{ cert.name }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="cert-item">
+                                <span class="icon">✅</span>
+                                AWS Certified Solutions Architect
+                            </div>
+                            <div class="cert-item">
+                                <span class="icon">✅</span>
+                                Advanced Python (HackerRank)
+                            </div>
+                        {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 3 -->
+            <div class="profile-column">
+                <!-- Personal -->
+                <div class="portal-card">
+                    <div class="info-card-header">
+                        <span class="nav-icon">📇</span> Personal
+                    </div>
+                    <div class="profile-grid-2-col">
+                        <div class="info-group">
+                            <span class="info-label">Date of Birth</span>
+                            <span class="info-value">{{ request.user.date_of_birth|date:"M d, Y"|default:"Oct 14, 1991" }}</span>
+                        </div>
+                        <div class="info-group">
+                            <span class="info-label">Gender</span>
+                            <span class="info-value">{{ request.user.get_gender_display|default:"Female" }}</span>
+                        </div>
+                        <div class="info-group">
+                            <span class="info-label">Blood Group</span>
+                            <span class="info-value">{{ request.user.blood_group|default:"O+" }}</span>
+                        </div>
+                        <div class="info-group">
+                            <span class="info-label">Marital Status</span>
+                            <span class="info-value">{{ request.user.get_marital_status_display|default:"Married" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial -->
+                <div class="portal-card">
+                    <div class="info-card-header">
+                        <span class="nav-icon">🏛️</span> Financial
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Bank Name</span>
+                        <span class="info-value">{{ request.user.bank_name|default:"Chase Corporate Banking" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Account Number</span>
+                        <span class="info-value">•••• •••• {{ request.user.account_number|slice:"-4:"|default:"8921" }}</span>
+                    </div>
+                    <div class="profile-grid-2-col" style="margin-top:16px;">
+                        <div class="info-group">
+                            <span class="info-label">IFSC Code</span>
+                            <span class="info-value">{{ request.user.ifsc_code|default:"CHAS000192" }}</span>
+                        </div>
+                        <div class="info-group">
+                            <span class="info-label">PAN</span>
+                            <span class="info-value">{{ request.user.pan_number|default:"AWXPB1294F" }}</span>
+                        </div>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Aadhaar / SSN</span>
+                        <span class="info-value">•••• •••• {{ request.user.aadhaar_number|slice:"-4:"|default:"1204" }}</span>
+                    </div>
+                </div>
+
+                <!-- Statutory -->
+                <div class="portal-card">
+                    <div class="info-card-header">
+                        <span class="nav-icon">⚖️</span> Statutory
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">PF UAN</span>
+                        <span class="info-value">{{ request.user.pf_uan|default:"100928374612" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">PF Account Number</span>
+                        <span class="info-value">{{ request.user.pf_account_number|default:"WA/SEA/12938/000/1293" }}</span>
+                    </div>
+                    <div class="info-group">
+                        <span class="info-label">Passport Number</span>
+                        <span class="info-value">{{ request.user.passport_number|default:"P91823746" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

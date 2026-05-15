@@ -154,11 +154,53 @@ class FamilyInfoForm(forms.ModelForm):
             'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
         ]
         widgets = {
-            'father_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': "Father's full name"}),
-            'mother_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': "Mother's full name"}),
+            'father_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Father full name'}),
+            'mother_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Mother full name'}),
             'emergency_contact_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Contact name'}),
-            'emergency_contact_phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': '+91 XXXXXXXXXX'}),
-            'emergency_contact_relation': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g. Father, Spouse'}),
+            'emergency_contact_relation': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Relation (e.g. Spouse)'}),
+            'emergency_contact_phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Emergency phone number'}),
+        }
+
+
+class UpdateProfileForm(forms.ModelForm):
+    class Meta:
+        model = Intern
+        fields = [
+            'date_of_birth', 'gender', 'blood_group', 'marital_status',
+            'personal_phone', 'email', 'current_address', 'permanent_address',
+            'designation', 'primary_unit', 'reporting_manager', 'total_experience',
+            'bank_name', 'account_number', 'ifsc_code', 'pan_number', 'aadhaar_number',
+            'father_name', 'mother_name', 'emergency_contact_name', 'emergency_contact_relation', 'emergency_contact_phone',
+            'pf_uan', 'pf_account_number', 'passport_number', 'technical_skills', 'profile_photo',
+        ]
+        widgets = {
+            'date_of_birth': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'gender': forms.Select(attrs={'class': 'form-control'}),
+            'blood_group': forms.Select(attrs={'class': 'form-control'}),
+            'marital_status': forms.Select(attrs={'class': 'form-control'}),
+            'personal_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'current_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'permanent_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'designation': forms.TextInput(attrs={'class': 'form-control'}),
+            'primary_unit': forms.TextInput(attrs={'class': 'form-control'}),
+            'reporting_manager': forms.TextInput(attrs={'class': 'form-control'}),
+            'total_experience': forms.TextInput(attrs={'class': 'form-control'}),
+            'bank_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'account_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'ifsc_code': forms.TextInput(attrs={'class': 'form-control'}),
+            'pan_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'aadhaar_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'father_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'mother_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_relation': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'pf_uan': forms.TextInput(attrs={'class': 'form-control'}),
+            'pf_account_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'passport_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'technical_skills': forms.TextInput(attrs={'class': 'form-control'}),
+            'profile_photo': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
 
