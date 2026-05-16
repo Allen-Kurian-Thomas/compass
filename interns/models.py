@@ -95,6 +95,7 @@ class Intern(AbstractBaseUser, PermissionsMixin):
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES, blank=True)
     marital_status = models.CharField(max_length=20, choices=MARITAL_STATUS_CHOICES, blank=True)
     profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
+    resume = models.FileField(upload_to='resumes/', blank=True, null=True)
     bio = models.TextField(blank=True)
 
     # Contact
@@ -130,6 +131,12 @@ class Intern(AbstractBaseUser, PermissionsMixin):
 
     # Technical skills (stored as comma-separated tags)
     technical_skills = models.TextField(blank=True, help_text="Comma-separated skills e.g. Python, Django")
+
+    # Education & Certifications Summary (for Profile Update)
+    highest_degree = models.CharField(max_length=150, blank=True)
+    college_university = models.CharField(max_length=200, blank=True)
+    graduation_year = models.CharField(max_length=10, blank=True)
+    certifications_summary = models.TextField(blank=True, help_text="Comma separated certifications")
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['full_name']

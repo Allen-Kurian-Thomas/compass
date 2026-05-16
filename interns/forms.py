@@ -78,6 +78,11 @@ class InternLoginForm(AuthenticationForm):
 
 
 class PersonalInfoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+
     class Meta:
         model = Intern
         fields = [
@@ -95,6 +100,11 @@ class PersonalInfoForm(forms.ModelForm):
 
 
 class ContactInfoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+
     class Meta:
         model = Intern
         fields = ['personal_phone', 'skype_id', 'current_address', 'permanent_address']
@@ -107,6 +117,11 @@ class ContactInfoForm(forms.ModelForm):
 
 
 class ProfessionalInfoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+
     class Meta:
         model = Intern
         fields = ['designation', 'reporting_manager', 'primary_unit', 'total_experience', 'technical_skills']
@@ -123,6 +138,11 @@ class ProfessionalInfoForm(forms.ModelForm):
 
 
 class FinancialInfoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+
     class Meta:
         model = Intern
         fields = ['bank_name', 'account_number', 'ifsc_code', 'pan_number', 'aadhaar_number']
@@ -136,6 +156,11 @@ class FinancialInfoForm(forms.ModelForm):
 
 
 class StatutoryInfoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+
     class Meta:
         model = Intern
         fields = ['pf_uan', 'pf_account_number', 'passport_number']
@@ -147,6 +172,11 @@ class StatutoryInfoForm(forms.ModelForm):
 
 
 class FamilyInfoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+
     class Meta:
         model = Intern
         fields = [
@@ -163,15 +193,21 @@ class FamilyInfoForm(forms.ModelForm):
 
 
 class UpdateProfileForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.required = False
+
     class Meta:
         model = Intern
         fields = [
             'date_of_birth', 'gender', 'blood_group', 'marital_status',
-            'personal_phone', 'email', 'current_address', 'permanent_address',
+            'personal_phone', 'email', 'current_address', 'permanent_address', 'bio',
             'designation', 'primary_unit', 'reporting_manager', 'total_experience',
             'bank_name', 'account_number', 'ifsc_code', 'pan_number', 'aadhaar_number',
             'father_name', 'mother_name', 'emergency_contact_name', 'emergency_contact_relation', 'emergency_contact_phone',
-            'pf_uan', 'pf_account_number', 'passport_number', 'technical_skills', 'profile_photo',
+            'pf_uan', 'pf_account_number', 'passport_number', 'technical_skills', 'profile_photo', 'resume',
+            'highest_degree', 'college_university', 'graduation_year', 'certifications_summary',
         ]
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -182,6 +218,7 @@ class UpdateProfileForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'current_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'permanent_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'designation': forms.TextInput(attrs={'class': 'form-control'}),
             'primary_unit': forms.TextInput(attrs={'class': 'form-control'}),
             'reporting_manager': forms.TextInput(attrs={'class': 'form-control'}),
@@ -199,8 +236,13 @@ class UpdateProfileForm(forms.ModelForm):
             'pf_uan': forms.TextInput(attrs={'class': 'form-control'}),
             'pf_account_number': forms.TextInput(attrs={'class': 'form-control'}),
             'passport_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'technical_skills': forms.TextInput(attrs={'class': 'form-control'}),
+            'technical_skills': forms.TextInput(attrs={'class': 'form-control', 'id': 'skills-input'}),
             'profile_photo': forms.FileInput(attrs={'class': 'form-control'}),
+            'resume': forms.FileInput(attrs={'class': 'form-control'}),
+            'highest_degree': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Master of Business Administration'}),
+            'college_university': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Harvard University'}),
+            'graduation_year': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'YYYY'}),
+            'certifications_summary': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. CFA Level 1, PMP'}),
         }
 
 

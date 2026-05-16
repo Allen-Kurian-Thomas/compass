@@ -44,8 +44,8 @@
                     </div>
                 {% endif %}
                 <div class="profile-hero-info">
-                    <h2 style="font-size:26px; font-weight:700; color:#0f172a; margin:0 0 6px 0; letter-spacing:-0.5px;">{{ request.user.first_name|default:"Sarah" }} {{ request.user.last_name|default:"Jenkins" }}</h2>
-                    <p style="font-size:14px; color:#64748b; margin:0;">{{ request.user.designation|default:"Senior Systems Architect" }} • {{ request.user.get_department_display|default:"Technology Div." }}</p>
+                    <h2 style="font-size:26px; font-weight:700; color:#0f172a; margin:0 0 6px 0; letter-spacing:-0.5px;">{{ request.user.full_name }}</h2>
+                    <p style="font-size:14px; color:#64748b; margin:0;">{{ request.user.designation }} • {{ request.user.get_department_display }}</p>
                 </div>
             </div>
             <div>
@@ -65,7 +65,7 @@
                         <span class="nav-icon">ⓘ</span> About Me
                     </div>
                     <p style="margin:0; font-size:13px; color:#475569; line-height:1.6;">
-                        {{ request.user.bio|default:"Passionate systems architect with over 8 years of experience in designing scalable backend infrastructure. Committed to building resilient applications and mentoring junior developers within the Technology Division." }}
+                        {{ request.user.bio }}
                     </p>
                 </div>
 
@@ -76,19 +76,19 @@
                     </div>
                     <div class="info-group">
                         <span class="info-label">Personal Phone</span>
-                        <span class="info-value">{{ request.user.personal_phone|default:"+1 (555) 283-9102" }}</span>
+                        <span class="info-value">{{ request.user.personal_phone }}</span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Skype ID</span>
-                        <span class="info-value">{{ request.user.skype_id|default:"sarah.j.tech" }}</span>
+                        <span class="info-value">{{ request.user.skype_id }}</span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Current Address</span>
-                        <span class="info-value" style="white-space:pre-line;">{{ request.user.current_address|default:"4120 Tech Boulevard, Apt 3B\nSeattle, WA 98109" }}</span>
+                        <span class="info-value" style="white-space:pre-line;">{{ request.user.current_address }}</span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Permanent Address</span>
-                        <span class="info-value" style="white-space:pre-line;">{{ request.user.permanent_address|default:"Same as Current" }}</span>
+                        <span class="info-value" style="white-space:pre-line;">{{ request.user.permanent_address }}</span>
                     </div>
                 </div>
 
@@ -99,16 +99,16 @@
                     </div>
                     <div class="info-group">
                         <span class="info-label">Father's Name</span>
-                        <span class="info-value">{{ request.user.father_name|default:"Robert Jenkins" }}</span>
+                        <span class="info-value">{{ request.user.father_name }}</span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Mother's Name</span>
-                        <span class="info-value">{{ request.user.mother_name|default:"Martha Jenkins" }}</span>
+                        <span class="info-value">{{ request.user.mother_name }}</span>
                     </div>
                     <div class="emergency-box">
                         <span class="info-label" style="color:#dc2626; display:flex; align-items:center; gap:4px; font-weight:700;"><span style="font-size:10px;">✱</span> Emergency Contact</span>
-                        <span class="info-value" style="display:block; margin-bottom:4px; font-weight:500;">{{ request.user.emergency_contact_name|default:"Michael Jenkins (Spouse)" }}</span>
-                        <span class="info-value" style="font-weight:500;">{{ request.user.emergency_contact_phone|default:"+1 (555) 839-2011" }}</span>
+                        <span class="info-value" style="display:block; margin-bottom:4px; font-weight:500;">{{ request.user.emergency_contact_name }}</span>
+                        <span class="info-value" style="font-weight:500;">{{ request.user.emergency_contact_phone }}</span>
                     </div>
                 </div>
             </div>
@@ -122,19 +122,19 @@
                     </div>
                     <div class="info-group">
                         <span class="info-label">Designation</span>
-                        <span class="info-value">{{ request.user.designation|default:"Senior Systems Architect" }}</span>
+                        <span class="info-value">{{ request.user.designation }}</span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Primary Unit</span>
-                        <span class="info-value">{{ request.user.primary_unit|default:"Core Infrastructure Platform" }}</span>
+                        <span class="info-value">{{ request.user.primary_unit }}</span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Reporting Manager</span>
-                        <span class="info-value" style="display:flex; align-items:center; gap:4px;"><span style="color:#64748b; font-size:14px;">👤</span> {{ request.user.reporting_manager|default:"David Chen (VP of Engineering)" }}</span>
+                        <span class="info-value" style="display:flex; align-items:center; gap:4px;"><span style="color:#64748b; font-size:14px;">👤</span> {{ request.user.reporting_manager }}</span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Total Experience</span>
-                        <span class="info-value">{{ request.user.total_experience|default:"8 Years, 4 Months" }}</span>
+                        <span class="info-value">{{ request.user.total_experience }}</span>
                     </div>
                 </div>
 
@@ -150,17 +150,24 @@
                                 {% for skill in skills %}
                                     <span class="skill-pill">{{ skill }}</span>
                                 {% endfor %}
-                            {% else %}
-                                <span class="skill-pill">Python</span>
-                                <span class="skill-pill">Django</span>
-                                <span class="skill-pill">AWS</span>
-                                <span class="skill-pill">PostgreSQL</span>
-                                <span class="skill-pill">Kubernetes</span>
                             {% endif %}
                         </div>
                     </div>
                     <div class="info-group" style="margin-top:24px;">
-                        <span class="info-label">Education</span>
+                        <span class="info-label">Education Summary</span>
+                        {% if request.user.highest_degree %}
+                            <div style="margin-top:8px; display:flex; align-items:flex-start; gap:8px;">
+                                <span style="font-size:16px;">🎓</span>
+                                <div>
+                                    <span class="info-value" style="display:block;">{{ request.user.highest_degree }}</span>
+                                    <span style="font-size:11px; color:#64748b;">{{ request.user.college_university }} • {{ request.user.graduation_year }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="info-group" style="margin-top:24px;">
+                        <span class="info-label">Detailed Education</span>
                         <div style="margin-top:8px;">
                         {% if educations %}
                             {% for edu in educations %}
@@ -172,19 +179,20 @@
                                 </div>
                             </div>
                             {% endfor %}
-                        {% else %}
-                            <div style="margin-bottom:12px; display:flex; align-items:flex-start; gap:8px;">
-                                <span style="font-size:16px; color:#475569;">🎓</span>
-                                <div>
-                                    <span class="info-value" style="display:block;">M.S. Computer Science</span>
-                                    <span style="font-size:11px; color:#64748b;">University of Washington • 2016</span>
-                                </div>
-                            </div>
                         {% endif %}
                         </div>
                     </div>
                     <div class="info-group" style="margin-top:24px;">
-                        <span class="info-label">Certifications</span>
+                        <span class="info-label">Certifications Summary</span>
+                        {% if request.user.certifications_summary %}
+                            <div style="margin-top:8px; font-size:12px; color:#475569;">
+                                {{ request.user.certifications_summary }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="info-group" style="margin-top:24px;">
+                        <span class="info-label">Detailed Certifications</span>
                         <div style="margin-top:8px;">
                         {% if certifications %}
                             {% for cert in certifications %}
@@ -193,15 +201,6 @@
                                     {{ cert.name }}
                                 </div>
                             {% endfor %}
-                        {% else %}
-                            <div class="cert-item">
-                                <span class="icon">✅</span>
-                                AWS Certified Solutions Architect
-                            </div>
-                            <div class="cert-item">
-                                <span class="icon">✅</span>
-                                Advanced Python (HackerRank)
-                            </div>
                         {% endif %}
                         </div>
                     </div>
@@ -218,19 +217,19 @@
                     <div class="profile-grid-2-col">
                         <div class="info-group">
                             <span class="info-label">Date of Birth</span>
-                            <span class="info-value">{{ request.user.date_of_birth|date:"M d, Y"|default:"Oct 14, 1991" }}</span>
+                            <span class="info-value">{{ request.user.date_of_birth|date:"M d, Y" }}</span>
                         </div>
                         <div class="info-group">
                             <span class="info-label">Gender</span>
-                            <span class="info-value">{{ request.user.get_gender_display|default:"Female" }}</span>
+                            <span class="info-value">{{ request.user.get_gender_display }}</span>
                         </div>
                         <div class="info-group">
                             <span class="info-label">Blood Group</span>
-                            <span class="info-value">{{ request.user.blood_group|default:"O+" }}</span>
+                            <span class="info-value">{{ request.user.blood_group }}</span>
                         </div>
                         <div class="info-group">
                             <span class="info-label">Marital Status</span>
-                            <span class="info-value">{{ request.user.get_marital_status_display|default:"Married" }}</span>
+                            <span class="info-value">{{ request.user.get_marital_status_display }}</span>
                         </div>
                     </div>
                 </div>
@@ -242,25 +241,25 @@
                     </div>
                     <div class="info-group">
                         <span class="info-label">Bank Name</span>
-                        <span class="info-value">{{ request.user.bank_name|default:"Chase Corporate Banking" }}</span>
+                        <span class="info-value">{{ request.user.bank_name }}</span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Account Number</span>
-                        <span class="info-value">•••• •••• {{ request.user.account_number|slice:"-4:"|default:"8921" }}</span>
+                        <span class="info-value">{% if request.user.account_number %}•••• •••• {{ request.user.account_number|slice:"-4:" }}{% endif %}</span>
                     </div>
                     <div class="profile-grid-2-col" style="margin-top:16px;">
                         <div class="info-group">
                             <span class="info-label">IFSC Code</span>
-                            <span class="info-value">{{ request.user.ifsc_code|default:"CHAS000192" }}</span>
+                            <span class="info-value">{{ request.user.ifsc_code }}</span>
                         </div>
                         <div class="info-group">
                             <span class="info-label">PAN</span>
-                            <span class="info-value">{{ request.user.pan_number|default:"AWXPB1294F" }}</span>
+                            <span class="info-value">{{ request.user.pan_number }}</span>
                         </div>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Aadhaar / SSN</span>
-                        <span class="info-value">•••• •••• {{ request.user.aadhaar_number|slice:"-4:"|default:"1204" }}</span>
+                        <span class="info-value">{% if request.user.aadhaar_number %}•••• •••• {{ request.user.aadhaar_number|slice:"-4:" }}{% endif %}</span>
                     </div>
                 </div>
 
@@ -271,15 +270,15 @@
                     </div>
                     <div class="info-group">
                         <span class="info-label">PF UAN</span>
-                        <span class="info-value">{{ request.user.pf_uan|default:"100928374612" }}</span>
+                        <span class="info-value">{{ request.user.pf_uan }}</span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">PF Account Number</span>
-                        <span class="info-value">{{ request.user.pf_account_number|default:"WA/SEA/12938/000/1293" }}</span>
+                        <span class="info-value">{{ request.user.pf_account_number }}</span>
                     </div>
                     <div class="info-group">
                         <span class="info-label">Passport Number</span>
-                        <span class="info-value">{{ request.user.passport_number|default:"P91823746" }}</span>
+                        <span class="info-value">{{ request.user.passport_number }}</span>
                     </div>
                 </div>
             </div>
