@@ -129,6 +129,10 @@ class Intern(AbstractBaseUser, PermissionsMixin):
     emergency_contact_phone = models.CharField(max_length=20, blank=True)
     emergency_contact_relation = models.CharField(max_length=50, blank=True)
 
+    # Registration Payment
+    transaction_id = models.CharField(max_length=100, blank=True)
+    payment_screenshot = models.ImageField(upload_to='payment_screenshots/', blank=True, null=True)
+
     # Technical skills (stored as comma-separated tags)
     technical_skills = models.TextField(blank=True, help_text="Comma-separated skills e.g. Python, Django")
 

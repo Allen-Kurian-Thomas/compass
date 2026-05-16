@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth import views as auth_views
 from django.views.generic import (
     TemplateView, FormView, UpdateView, CreateView, DeleteView, View
@@ -37,17 +37,17 @@ class LoginView(auth_views.LoginView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
+            if request.user.is_staff or request.user.is_superuser:
+                return redirect('admin_dashboard')
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         user = form.get_user()
         login(self.request, user)
+        if user.is_staff or user.is_superuser:
+            return redirect('admin_dashboard')
         return redirect('home')
-
-    def form_invalid(self, form):
-        messages.error(self.request, "Invalid email or password. Please try again.")
-        return super().form_invalid(form)
 
 
 class LogoutView(View):
@@ -59,6 +59,59 @@ class LogoutView(View):
 class HomeView(LoginRequiredMixin, TemplateView):
     template_name = 'interns/home.html'
 
+
+class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'interns/admin_dashboard.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Mocking active projects since there is no Project model yet
+        context['active_projects'] = 45
+        context['total_employees'] = Intern.objects.filter(status='approved', is_staff=False).count()
+        context['recent_requests'] = Intern.objects.filter(status='pending').order_by('-date_joined')[:5]
+        return context
+
+
+class AdminEmployeeApprovalView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'interns/employee_approval.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pending_interns'] = Intern.objects.filter(status='pending', is_staff=False).order_by('-date_joined')
+        return context
+
+
+class AdminEmployeeActionView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def post(self, request, pk, action):
+        intern = get_object_or_404(Intern, pk=pk)
+        if action == 'approve':
+            intern.status = 'approved'
+        elif action == 'reject':
+            intern.status = 'rejected'
+        intern.save()
+        return redirect('employee_approval')
+
+
+class AdminEmployeeListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'interns/employee_list.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Fetch approved interns and exclude staff/superusers
+        context['approved_interns'] = Intern.objects.filter(status='approved', is_staff=False).order_by('-date_joined')
+        return context
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'interns/profile.html'

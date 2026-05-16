@@ -1,0 +1,534 @@
+{% extends 'base.html' %}
+{% block title %}Employee Approval – Registration System{% endblock %}
+{% block body_class %}admin-dashboard-page{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --admin-sidebar-bg: #0b1524;
+        --admin-sidebar-hover: #152233;
+        --admin-sidebar-active: #487244;
+        --admin-sidebar-text: #b0b8c4;
+        --admin-sidebar-text-active: #ffffff;
+        
+        --admin-bg: #ffffff;
+        --admin-card-bg: #ffffff;
+        --admin-border: #e6e9ef;
+        --admin-text-main: #111827;
+        --admin-text-muted: #6b7280;
+        
+        --admin-primary: #111827;
+        --admin-success: #10b981;
+        --admin-danger: #ef4444;
+        --admin-green-bg: #f0fdf4;
+    }
+
+    body.admin-dashboard-page {
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+        background-color: var(--admin-bg);
+        color: var(--admin-text-main);
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* Layout */
+    .admin-layout {
+        display: flex;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Sidebar */
+    .admin-sidebar {
+        width: 260px;
+        background-color: var(--admin-sidebar-bg);
+        display: flex;
+        flex-direction: column;
+        color: var(--admin-sidebar-text);
+        flex-shrink: 0;
+    }
+
+    .admin-sidebar-header {
+        padding: 30px 24px;
+    }
+
+    .admin-brand {
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .admin-subbrand {
+        font-size: 12px;
+        color: var(--admin-sidebar-text);
+        margin-top: 4px;
+        font-weight: 400;
+    }
+
+    .admin-nav {
+        flex: 1;
+        padding: 0 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .admin-nav-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        color: var(--admin-sidebar-text);
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .admin-nav-item:hover {
+        background-color: var(--admin-sidebar-hover);
+        color: #ffffff;
+    }
+
+    .admin-nav-item.active {
+        background-color: var(--admin-sidebar-active);
+        color: var(--admin-sidebar-text-active);
+    }
+
+    .admin-nav-icon {
+        margin-right: 12px;
+        font-size: 18px;
+        width: 24px;
+        text-align: center;
+    }
+
+    .admin-sidebar-footer {
+        padding: 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+    }
+
+    .admin-user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background-color: #2c3e50;
+        margin-right: 12px;
+        background-image: url('https://ui-avatars.com/api/?name={{ request.user.full_name|urlencode }}&background=1e293b&color=fff&rounded=true');
+        background-size: cover;
+    }
+
+    .admin-user-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .admin-user-name {
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .admin-user-email {
+        font-size: 12px;
+        color: var(--admin-sidebar-text);
+    }
+
+    /* Main Area */
+    .admin-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        background-color: #ffffff;
+    }
+
+    .admin-topbar {
+        padding: 20px 40px;
+        border-bottom: 1px solid var(--admin-border);
+        display: flex;
+        align-items: center;
+        background-color: #ffffff;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .admin-topbar-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--admin-text-main);
+        margin: 0;
+    }
+
+    .admin-content {
+        padding: 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .admin-page-title {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 8px 0;
+        color: var(--admin-text-main);
+    }
+
+    .admin-page-subtitle {
+        color: var(--admin-text-muted);
+        font-size: 15px;
+        margin: 0 0 32px 0;
+    }
+
+    /* Table Styles */
+    .admin-table-container {
+        background-color: var(--admin-card-bg);
+        border: 1px solid var(--admin-border);
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        overflow: hidden;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .admin-table th {
+        background-color: #f9fafb;
+        padding: 16px 24px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--admin-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--admin-border);
+    }
+
+    .admin-table td {
+        padding: 16px 24px;
+        font-size: 14px;
+        color: var(--admin-text-main);
+        border-bottom: 1px solid var(--admin-border);
+        vertical-align: middle;
+    }
+
+    .admin-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .admin-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .admin-user-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .admin-user-cell-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background-color: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: #4b5563;
+        flex-shrink: 0;
+    }
+
+    .admin-user-cell-name {
+        font-weight: 600;
+    }
+
+    .admin-btn-view {
+        background-color: #f3f4f6;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--admin-text-main);
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+
+    .admin-btn-view:hover {
+        background-color: #e5e7eb;
+    }
+
+    .admin-btn-view.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .admin-actions-cell {
+        display: flex;
+        gap: 8px;
+    }
+
+    .admin-btn-action {
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .admin-btn-approve {
+        background-color: var(--admin-success);
+        color: white;
+    }
+
+    .admin-btn-approve:hover {
+        background-color: #059669;
+    }
+
+    .admin-btn-reject {
+        background-color: white;
+        border: 1px solid var(--admin-danger);
+        color: var(--admin-danger);
+    }
+
+    .admin-btn-reject:hover {
+        background-color: #fef2f2;
+    }
+
+    .empty-state-list {
+        padding: 40px;
+        text-align: center;
+        color: var(--admin-text-muted);
+        font-size: 15px;
+    }
+
+    /* Modal Styles */
+    .screenshot-modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(0,0,0,0.7);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+    }
+    .screenshot-modal.active {
+        display: flex;
+    }
+    .screenshot-content {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        max-width: 800px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .screenshot-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    .screenshot-title {
+        font-weight: 600;
+        margin: 0;
+    }
+    .screenshot-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    }
+    .screenshot-img-wrap {
+        overflow: auto;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .screenshot-img {
+        max-width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <h1 class="admin-brand">Admin<br>Dashboard</h1>
+            <div class="admin-subbrand">Management Portal</div>
+        </div>
+        
+        <nav class="admin-nav">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-item">
+                <span class="admin-nav-icon">🛡️</span>
+                Home
+            </a>
+            <a href="{% url 'employee_approval' %}" class="admin-nav-item active">
+                <span class="admin-nav-icon">☑️</span>
+                Employee Approval
+            </a>
+            <a href="{% url 'employee_list' %}" class="admin-nav-item">
+                <span class="admin-nav-icon">👥</span>
+                Employee List
+            </a>
+            <a href="#" class="admin-nav-item">
+                <span class="admin-nav-icon">🗂️</span>
+                Project List
+            </a>
+            <a href="{% url 'logout' %}" class="admin-nav-item" style="margin-top: auto; color: #ef4444;">
+                <span class="admin-nav-icon">🚪</span>
+                Logout
+            </a>
+        </nav>
+
+        <div class="admin-sidebar-footer">
+            <div class="admin-user-avatar"></div>
+            <div class="admin-user-info">
+                <span class="admin-user-name">{{ request.user.full_name|default:"Admin User" }}</span>
+                <span class="admin-user-email">{{ request.user.email }}</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <h2 class="admin-topbar-title">Registration System</h2>
+        </header>
+
+        <div class="admin-content">
+            <h2 class="admin-page-title">Employee Approval</h2>
+            <p class="admin-page-subtitle">Review and manage new employee registrations and payment screenshots.</p>
+
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Employee Name</th>
+                            <th>Employee Email</th>
+                            <th>Transaction ID</th>
+                            <th>Screenshot</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for intern in pending_interns %}
+                        <tr>
+                            <td>
+                                <div class="admin-user-cell">
+                                    <div class="admin-user-cell-avatar">
+                                        {{ intern.first_name|first|upper }}{{ intern.last_name|first|upper }}
+                                    </div>
+                                    <div class="admin-user-cell-name">{{ intern.full_name }}</div>
+                                </div>
+                            </td>
+                            <td>{{ intern.email }}</td>
+                            <td>
+                                {% if intern.transaction_id %}
+                                    <span style="font-family: monospace; font-size: 13px;">{{ intern.transaction_id }}</span>
+                                {% else %}
+                                    <span style="color: var(--admin-text-muted); font-style: italic;">Not provided</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if intern.payment_screenshot %}
+                                    <button class="admin-btn-view" onclick="openScreenshot('{{ intern.payment_screenshot.url }}', '{{ intern.full_name|escapejs }}')">
+                                        👁️ View Image
+                                    </button>
+                                {% else %}
+                                    <span class="admin-btn-view disabled">No Image</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="admin-actions-cell">
+                                    <form method="post" action="{% url 'admin_action' intern.pk 'approve' %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="admin-btn-action admin-btn-approve">Approve</button>
+                                    </form>
+                                    <form method="post" action="{% url 'admin_action' intern.pk 'reject' %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="admin-btn-action admin-btn-reject">Reject</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state-list">No pending employee approvals at the moment.</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div class="screenshot-modal" id="screenshotModal">
+        <div class="screenshot-content">
+            <div class="screenshot-header">
+                <h3 class="screenshot-title" id="screenshotTitle">Payment Screenshot</h3>
+                <button class="screenshot-close" onclick="closeScreenshot()">×</button>
+            </div>
+            <div class="screenshot-img-wrap">
+                <img src="" id="screenshotImg" class="screenshot-img" alt="Screenshot">
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function openScreenshot(url, name) {
+        document.getElementById('screenshotImg').src = url;
+        document.getElementById('screenshotTitle').textContent = 'Screenshot - ' + name;
+        document.getElementById('screenshotModal').classList.add('active');
+    }
+    
+    function closeScreenshot() {
+        document.getElementById('screenshotModal').classList.remove('active');
+        document.getElementById('screenshotImg').src = '';
+    }
+
+    // Close on click outside
+    document.getElementById('screenshotModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeScreenshot();
+        }
+    });
+</script>
+{% endblock %}

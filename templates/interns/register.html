@@ -161,7 +161,7 @@
         <h1>Employee Registration</h1>
         <p>Please complete your corporate profile to proceed.</p>
     </div>
-    <form method="post" id="registerForm" novalidate>
+    <form method="post" id="registerForm" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         <div class="corp-form-group">
             <label class="corp-label" for="id_full_name">Full Name</label>
@@ -216,6 +216,18 @@
                 {% endfor %}
             </select>
             {% if form.department.errors %}<span class="field-error">{{ form.department.errors.0 }}</span>{% endif %}
+        </div>
+
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_transaction_id">Payment Transaction ID</label>
+            <input type="text" name="transaction_id" class="corp-input" placeholder="Enter Transaction ID" id="id_transaction_id" value="{{ form.transaction_id.value|default:'' }}">
+            {% if form.transaction_id.errors %}<span class="field-error">{{ form.transaction_id.errors.0 }}</span>{% endif %}
+        </div>
+
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_payment_screenshot">Payment Screenshot</label>
+            <input type="file" name="payment_screenshot" class="corp-input" id="id_payment_screenshot" accept="image/*">
+            {% if form.payment_screenshot.errors %}<span class="field-error">{{ form.payment_screenshot.errors.0 }}</span>{% endif %}
         </div>
         
         {% if form.non_field_errors %}
