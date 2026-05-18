@@ -18,6 +18,15 @@ from .forms import (
     EducationForm, CertificationForm, UpdateProfileForm,
 )
 from .models import Intern, Education, Certification, DEPARTMENT_CHOICES, Project
+from django.http import JsonResponse
+
+class CheckEmailView(View):
+    def get(self, request, *args, **kwargs):
+        email = request.GET.get('email', '').strip()
+        exists = False
+        if email:
+            exists = Intern.objects.filter(email__iexact=email).exists()
+        return JsonResponse({'exists': exists})
 
 
 class RegisterView(FormView):

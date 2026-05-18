@@ -16,9 +16,6 @@
     <div class="toast-container" id="toastContainer">
         {% for message in messages %}
         <div class="toast toast-{{ message.tags }}">
-            <span class="toast-icon">
-                {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}❌{% else %}ℹ️{% endif %}
-            </span>
             <span>{{ message }}</span>
             <button class="toast-close" onclick="this.parentElement.remove()">×</button>
         </div>
@@ -33,6 +30,52 @@
                 setTimeout(() => t.remove(), 400);
             });
         }, 5000);
+
+        function togglePortalSidebar() {
+            const sidebar = document.querySelector('.portal-sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+                toggleBackdrop(sidebar);
+            }
+        }
+
+        function toggleAdminSidebar() {
+            const sidebar = document.querySelector('.admin-sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+                toggleBackdrop(sidebar);
+            }
+        }
+
+        function toggleBackdrop(sidebar) {
+            let backdrop = document.getElementById('sidebar-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'sidebar-backdrop';
+                backdrop.style.position = 'fixed';
+                backdrop.style.top = '0';
+                backdrop.style.left = '0';
+                backdrop.style.right = '0';
+                backdrop.style.bottom = '0';
+                backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+                backdrop.style.backdropFilter = 'blur(2px)';
+                backdrop.style.zIndex = '95';
+                backdrop.style.opacity = '0';
+                backdrop.style.transition = 'opacity 0.3s ease';
+                backdrop.addEventListener('click', () => {
+                    sidebar.classList.remove('open');
+                    backdrop.style.opacity = '0';
+                    setTimeout(() => backdrop.remove(), 300);
+                });
+                document.body.appendChild(backdrop);
+                // Force reflow
+                backdrop.offsetHeight;
+                backdrop.style.opacity = '1';
+            } else {
+                backdrop.style.opacity = '0';
+                setTimeout(() => backdrop.remove(), 300);
+            }
+        }
     </script>
     {% block extra_scripts %}{% endblock %}
 </body>

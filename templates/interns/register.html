@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Employee Registration{% endblock %}
 {% block body_class %}corp-auth-bg{% endblock %}
 
@@ -166,6 +167,12 @@
         font-size: 13px;
         margin-bottom: 15px;
         border: 1px solid #fca5a5;
+    }
+
+    .form-error-box ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
     }
 
     .corp-page-footer {
@@ -398,17 +405,64 @@
         font-weight: 600;
         display: none;
     }
+
+    .corp-logo-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 12px;
+    }
+
+    .corp-logo-img {
+        height: 75px;
+        width: auto;
+        display: block;
+    }
+
+    @media (max-width: 480px) {
+        body.corp-auth-bg {
+            padding: 20px 12px;
+        }
+        .corp-card {
+            padding: 24px 20px;
+            border-radius: 6px;
+        }
+        .corp-logo-img {
+            height: 60px;
+        }
+        .payment-modal {
+            max-height: 95vh;
+            border-radius: 8px;
+        }
+        .payment-modal-header {
+            padding: 16px 20px 12px;
+        }
+        .payment-modal-body {
+            padding: 16px 20px;
+        }
+        .payment-modal-footer {
+            padding: 12px 20px 20px;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .qr-image {
+            width: 140px;
+            height: 140px;
+        }
+        .corp-page-footer-links {
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div
-    style="position: absolute; top: 20px; left: 25px; font-weight: 600; font-size: 18px; color: #1e293b; font-family: 'Inter', sans-serif;">
-    Corporate Portal</div>
-
 <div class="corp-card">
     <div class="corp-header">
-        <h1>Employee Registration</h1>
+        <div class="corp-logo-wrap">
+            <img class="corp-logo-img" src="{% static 'images/logo_cropped.png' %}" alt="COMPASS Logo">
+        </div>
+        <h1>Registration</h1>
         <p>Please complete your corporate profile to proceed.</p>
     </div>
     <form method="post" id="registerForm" enctype="multipart/form-data" novalidate>
@@ -421,16 +475,8 @@
         </div>
         <div class="corp-form-group">
             <label class="corp-label" for="id_email">Official Email</label>
-            <div class="corp-input-wrap">
-                <input type="email" name="email" class="corp-input with-icon" placeholder="jane.doe@company.com"
-                    required id="id_email" value="{{ form.email.value|default:'' }}">
-                <div class="corp-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#345e37">
-                        <path
-                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                    </svg>
-                </div>
-            </div>
+            <input type="email" name="email" class="corp-input" placeholder="jane.doe@company.com"
+                required id="id_email" value="{{ form.email.value|default:'' }}">
             {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
         </div>
         <div class="corp-form-group">
@@ -438,7 +484,7 @@
             <div class="corp-input-wrap">
                 <input type="password" name="password1" class="corp-input with-icon" placeholder="••••••••" required
                     id="id_password1">
-                <div class="corp-icon">
+                <div class="corp-icon" id="password-tick" style="display: none;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="#345e37">
                         <path
                             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
@@ -507,14 +553,14 @@
                 </div>
                 <div class="payment-modal-body">
                     <p class="payment-instruction">
-                        To complete the registration process, please make a payment of <strong>₹100</strong> using the UPI
+                        To complete the registration process, please make a payment of <strong>₹3000</strong> using the
+                        UPI
                         QR code below.
                     </p>
 
                     <div class="qr-container">
                         <div class="qr-box">
-                            <img src="{{ qr_code_url }}"
-                                alt="UPI QR Code" class="qr-image">
+                            <img src="{{ qr_code_url }}" alt="UPI QR Code" class="qr-image">
                         </div>
                         <span class="qr-caption">Scan using any UPI app to pay <strong>{{ upi_name }}</strong> ({{ upi_id }})</span>
                     </div>
@@ -546,7 +592,7 @@
 
                     <div class="payment-notice">
                         <strong>Please note:</strong> Your registration will be approved within 3-4 business days after
-                        the payment has been successfully confirmed. For assistance, contact: +91 12345 67852.
+                        the payment has been successfully confirmed. For assistance, contact: +919061401943.
                     </div>
                 </div>
                 <div class="payment-modal-footer">
@@ -577,18 +623,70 @@
     const password1Input = document.getElementById('id_password1');
     const password2Input = document.getElementById('id_password2');
 
-    // Sync password1 to password2
+    const passwordTick = document.getElementById('password-tick');
+
+    // Sync password1 to password2 and validate strength
     password1Input.addEventListener('input', () => {
-        password2Input.value = password1Input.value;
+        const val = password1Input.value;
+        password2Input.value = val;
+
+        const hasMinLength = val.length >= 8;
+        const hasUppercase = /[A-Z]/.test(val);
+        const hasLowercase = /[a-z]/.test(val);
+        const hasNumber = /[0-9]/.test(val);
+        const hasSpecial = /[^A-Za-z0-9]/.test(val);
+
+        if (hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial) {
+            passwordTick.style.display = 'flex';
+        } else {
+            passwordTick.style.display = 'none';
+        }
     });
 
     // Handle Register Button Click
     registerBtn.addEventListener('click', function (e) {
         e.preventDefault();
 
+        // Clear any old dynamically shown duplicate errors
+        const existingError = document.getElementById('email-duplicate-error');
+        if (existingError) {
+            existingError.remove();
+        }
+
         // Check if main registration form is valid
         if (registerForm.checkValidity()) {
-            openPaymentModal();
+            const emailInput = document.getElementById('id_email');
+            const email = emailInput.value.trim();
+
+            // Disable button and show checking spinner/state
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Checking...';
+
+            fetch(`/check-email/?email=${encodeURIComponent(email)}`)
+                .then(response => response.json())
+                .then(data => {
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = 'Register';
+
+                    if (data.exists) {
+                        const emailWrap = emailInput.closest('.corp-form-group');
+                        const errorSpan = document.createElement('span');
+                        errorSpan.className = 'field-error';
+                        errorSpan.id = 'email-duplicate-error';
+                        errorSpan.textContent = 'Intern with this Email already exists.';
+                        emailWrap.appendChild(errorSpan);
+                        emailInput.focus();
+                    } else {
+                        openPaymentModal();
+                    }
+                })
+                .catch(err => {
+                    console.error('Error checking email:', err);
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = 'Register';
+                    // Fallback to open modal in case of network issue
+                    openPaymentModal();
+                });
         } else {
             // Trigger browser validation UI
             registerForm.reportValidity();

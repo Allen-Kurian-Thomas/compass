@@ -604,3 +604,114 @@ textarea.form-control {
     color: #64748b;
     cursor: pointer;
 }
+
+/* ============ EMPLOYEE PORTAL RESPONSIVE STYLES ============ */
+.portal-mobile-header {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.portal-mobile-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.portal-menu-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #0f172a;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 992px) {
+    .profile-columns {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .profile-column {
+        width: 100%;
+    }
+
+    .profile-hero-card {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center;
+        gap: 16px;
+    }
+
+    .profile-hero-left {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .portal-layout {
+        flex-direction: column;
+    }
+
+    .portal-mobile-header {
+        display: flex;
+    }
+
+    .portal-sidebar {
+        width: 260px !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        z-index: 200 !important;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        background-color: #ffffff !important;
+    }
+
+    .portal-sidebar.open {
+        transform: translateX(0) !important;
+    }
+
+    .portal-main {
+        margin-left: 0 !important;
+        padding: 24px 16px !important;
+    }
+
+    .portal-grid-3 {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    .profile-grid-2-col {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .form-row {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+    
+    .update-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 16px !important;
+    }
+
+    .update-actions {
+        width: 100% !important;
+        justify-content: flex-end !important;
+    }
+}
