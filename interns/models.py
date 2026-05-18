@@ -205,3 +205,27 @@ class Certification(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.platform}"
+
+
+class Project(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('finished', 'Finished'),
+        ('abandoned', 'Abandoned'),
+    ]
+
+    name = models.CharField(max_length=200)
+    client_department = models.CharField(max_length=200)
+    lead = models.ForeignKey(Intern, on_delete=models.SET_NULL, null=True, related_name='led_projects')
+    timeline = models.CharField(max_length=100)
+    budget = models.CharField(max_length=50)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Project'
+        verbose_name_plural = 'Projects'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.name

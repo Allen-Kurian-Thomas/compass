@@ -9,13 +9,15 @@ from django.views.generic import (
 )
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.db.models import Q
+from django.core.paginator import Paginator
 from .forms import (
     InternRegistrationForm, InternLoginForm,
     PersonalInfoForm, ContactInfoForm, ProfessionalInfoForm,
     FinancialInfoForm, StatutoryInfoForm, FamilyInfoForm,
     EducationForm, CertificationForm, UpdateProfileForm,
 )
-from .models import Intern, Education, Certification
+from .models import Intern, Education, Certification, DEPARTMENT_CHOICES, Project
 
 
 class RegisterView(FormView):
@@ -104,7 +106,27 @@ class AdminEmployeeApprovalView(LoginRequiredMixin, UserPassesTestMixin, Templat
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['pending_interns'] = Intern.objects.filter(status='pending', is_staff=False).order_by('-date_joined')
+        
+        queryset = Intern.objects.filter(status='pending', is_staff=False).order_by('-date_joined')
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(full_name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(transaction_id__icontains=search_query)
+            )
+            
+        # Pagination functionality
+        paginator = Paginator(queryset, 10)  # Show 10 requests per page
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context['pending_interns'] = page_obj
+        context['page_obj'] = page_obj
+        context['search_query'] = search_query
+        context['total_count'] = queryset.count()
         return context
 
 
@@ -130,8 +152,42 @@ class AdminEmployeeListView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Fetch approved interns and exclude staff/superusers
-        context['approved_interns'] = Intern.objects.filter(status='approved', is_staff=False).order_by('-date_joined')
+        
+        queryset = Intern.objects.filter(status='approved', is_staff=False).order_by('-date_joined')
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(full_name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(employee_id__icontains=search_query)
+            )
+            
+        # Department filter
+        department_query = self.request.GET.get('department', '')
+        if department_query:
+            queryset = queryset.filter(department=department_query)
+            
+        # Status filter (using is_active)
+        status_query = self.request.GET.get('status', '')
+        if status_query == 'active':
+            queryset = queryset.filter(is_active=True)
+        elif status_query == 'inactive':
+            queryset = queryset.filter(is_active=False)
+            
+        # Pagination functionality
+        paginator = Paginator(queryset, 10)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context['approved_interns'] = page_obj
+        context['page_obj'] = page_obj
+        context['search_query'] = search_query
+        context['department_query'] = department_query
+        context['status_query'] = status_query
+        context['departments'] = DEPARTMENT_CHOICES
+        context['total_count'] = queryset.count()
         return context
 
 class ProfileView(LoginRequiredMixin, TemplateView):
@@ -284,3 +340,42 @@ class DeleteCertificationView(LoginRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
+
+
+class AdminProjectListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'interns/project_list.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        queryset = Project.objects.all().select_related('lead').order_by('-created_at')
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(client_department__icontains=search_query) |
+                Q(lead__first_name__icontains=search_query) |
+                Q(lead__last_name__icontains=search_query)
+            )
+            
+        # Status filter
+        status_query = self.request.GET.get('status', '')
+        if status_query:
+            queryset = queryset.filter(status=status_query)
+            
+        # Pagination functionality
+        paginator = Paginator(queryset, 10)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context['projects'] = page_obj
+        context['page_obj'] = page_obj
+        context['search_query'] = search_query
+        context['status_query'] = status_query
+        context['total_count'] = queryset.count()
+        return context
