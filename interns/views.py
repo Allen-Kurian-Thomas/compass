@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth import views as auth_views
+from django.conf import settings
+import urllib.parse
 from django.views.generic import (
     TemplateView, FormView, UpdateView, CreateView, DeleteView, View
 )
@@ -21,13 +23,32 @@ class RegisterView(FormView):
     form_class = InternRegistrationForm
     success_url = reverse_lazy('login')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        upi_id = getattr(settings, 'UPI_ID', 'riyamathw52@okicici')
+        upi_name = getattr(settings, 'UPI_NAME', 'Riya Mathew')
+        # Build the UPI payment URI
+        upi_uri = f"upi://pay?pa={upi_id}&pn={upi_name}&am=100&cu=INR&tn=Registration Fee&mc=0000"
+        # URL encode the entire UPI URI for the QR code generation service
+        encoded_upi_uri = urllib.parse.quote(upi_uri)
+        context['upi_id'] = upi_id
+        context['upi_name'] = upi_name
+        context['qr_code_url'] = f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={encoded_upi_uri}"
+        return context
+
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        intern = form.save()
+        intern = form.save(commit=False)
+        # Manually extract fields from POST/FILES since they aren't in the form class
+        intern.transaction_id = self.request.POST.get('transaction_id', '')
+        if 'payment_screenshot' in self.request.FILES:
+            intern.payment_screenshot = self.request.FILES['payment_screenshot']
+        intern.save()
+        messages.success(self.request, "Registration successful! Your account is pending admin approval.")
         return super().form_valid(form)
 
 

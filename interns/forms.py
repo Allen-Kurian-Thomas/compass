@@ -24,7 +24,7 @@ class InternRegistrationForm(forms.ModelForm):
 
     class Meta:
         model = Intern
-        fields = ['full_name', 'email', 'department', 'transaction_id', 'payment_screenshot']
+        fields = ['full_name', 'email', 'department']
         widgets = {
             'full_name': forms.TextInput(attrs={
                 'class': 'form-input',
@@ -39,15 +39,6 @@ class InternRegistrationForm(forms.ModelForm):
             'department': forms.Select(attrs={
                 'class': 'form-input',
                 'id': 'id_department',
-            }),
-            'transaction_id': forms.TextInput(attrs={
-                'class': 'form-input',
-                'placeholder': 'Transaction ID',
-                'id': 'id_transaction_id',
-            }),
-            'payment_screenshot': forms.FileInput(attrs={
-                'class': 'form-input',
-                'id': 'id_payment_screenshot',
             }),
         }
 
