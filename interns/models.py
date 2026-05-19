@@ -23,15 +23,21 @@ class InternManager(BaseUserManager):
 
 
 def generate_employee_id():
-    last = Intern.objects.order_by('-employee_id').first()
-    if last and last.employee_id:
+    # Only look at interns that already have an employee_id assigned
+    existing = Intern.objects.filter(
+        employee_id__isnull=False
+    ).exclude(employee_id='')
+
+    highest_num = 1000
+    for intern in existing:
         try:
-            num = int(last.employee_id[2:]) + 1
-        except (ValueError, TypeError):
-            num = 1001
-    else:
-        num = 1001
-    return f"TS{num}"
+            num = int(intern.employee_id[2:])
+            if num > highest_num:
+                highest_num = num
+        except (ValueError, TypeError, IndexError):
+            continue
+
+    return f"TS{highest_num + 1}"
 
 
 DEPARTMENT_CHOICES = [
