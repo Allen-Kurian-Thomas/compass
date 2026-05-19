@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 
 class InternManager(BaseUserManager):
@@ -131,7 +132,7 @@ class Intern(AbstractBaseUser, PermissionsMixin):
 
     # Registration Payment
     transaction_id = models.CharField(max_length=100, blank=True)
-    payment_screenshot = models.ImageField(upload_to='payment_screenshots/', blank=True, null=True)
+    payment_screenshot = CloudinaryField('payment_screenshot', type='private', blank=True, null=True)
 
     # Technical skills (stored as comma-separated tags)
     technical_skills = models.TextField(blank=True, help_text="Comma-separated skills e.g. Python, Django")
@@ -183,6 +184,18 @@ class Intern(AbstractBaseUser, PermissionsMixin):
         ]
         filled = sum(1 for f in fields if f)
         return int((filled / len(fields)) * 100)
+
+    @property
+    def payment_screenshot_url(self):
+        if self.payment_screenshot:
+            import cloudinary.utils
+            url, options = cloudinary.utils.cloudinary_url(
+                self.payment_screenshot.public_id,
+                sign_url=True,
+                type='private'
+            )
+            return url
+        return None
 
 
 class Education(models.Model):
