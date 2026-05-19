@@ -25,9 +25,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-for-dev-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = True
 
-ALLOWED_HOSTS = []
+# Automatically include Railway's public domain if available (production)
+_railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+if _railway_domain:
+    ALLOWED_HOSTS.append(_railway_domain)
 
 
 # Application definition
@@ -46,6 +50,7 @@ AUTH_USER_MODEL = 'interns.Intern'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Serves static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -121,6 +126,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+# Required by Django's collectstatic command — must always be set
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# WhiteNoise: compress and cache-bust static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
@@ -137,14 +146,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # UPI Payment Settings
 UPI_ID = os.environ.get('UPI_ID')
 UPI_NAME = os.environ.get('UPI_NAME')
-
-# Cloudinary Settings
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
-cloudinary.config(
-    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
-    api_key=os.getenv('CLOUDINARY_API_KEY'),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET')
-)
