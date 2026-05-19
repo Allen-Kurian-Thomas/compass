@@ -1,224 +1,390 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth import views as auth_views
+from django.conf import settings
+import urllib.parse
+from django.views.generic import (
+    TemplateView, FormView, UpdateView, CreateView, DeleteView, View
+)
+from django.urls import reverse_lazy
 from django.contrib import messages
+from django.db.models import Q
+from django.core.paginator import Paginator
 from .forms import (
     InternRegistrationForm, InternLoginForm,
     PersonalInfoForm, ContactInfoForm, ProfessionalInfoForm,
     FinancialInfoForm, StatutoryInfoForm, FamilyInfoForm,
-    EducationForm, CertificationForm,
+    EducationForm, CertificationForm, UpdateProfileForm,
 )
-from .models import Intern, Education, Certification
+from .models import Intern, Education, Certification, DEPARTMENT_CHOICES, Project
+from django.http import JsonResponse
+
+class CheckEmailView(View):
+    def get(self, request, *args, **kwargs):
+        email = request.GET.get('email', '').strip()
+        exists = False
+        if email:
+            exists = Intern.objects.filter(email__iexact=email).exists()
+        return JsonResponse({'exists': exists})
 
 
-def register_view(request):
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-    if request.method == 'POST':
-        form = InternRegistrationForm(request.POST)
-        if form.is_valid():
-            intern = form.save()
-            messages.success(
-                request,
-                f"Account created for {intern.full_name}. Your registration is pending HR approval. "
-                f"You will be notified once approved."
+class RegisterView(FormView):
+    template_name = 'interns/register.html'
+    form_class = InternRegistrationForm
+    success_url = reverse_lazy('login')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        upi_id = getattr(settings, 'UPI_ID', 'riyamathw52@okicici')
+        upi_name = getattr(settings, 'UPI_NAME', 'Riya Mathew')
+        # Build the UPI payment URI
+        upi_uri = f"upi://pay?pa={upi_id}&pn={upi_name}&am=100&cu=INR&tn=Registration Fee&mc=0000"
+        # URL encode the entire UPI URI for the QR code generation service
+        encoded_upi_uri = urllib.parse.quote(upi_uri)
+        context['upi_id'] = upi_id
+        context['upi_name'] = upi_name
+        context['qr_code_url'] = f"https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={encoded_upi_uri}"
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('home')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        intern = form.save(commit=False)
+        # Manually extract fields from POST/FILES since they aren't in the form class
+        intern.transaction_id = self.request.POST.get('transaction_id', '')
+        if 'payment_screenshot' in self.request.FILES:
+            intern.payment_screenshot = self.request.FILES['payment_screenshot']
+        intern.save()
+        messages.success(self.request, "Registration successful! Your account is pending admin approval.")
+        return super().form_valid(form)
+
+
+class LoginView(auth_views.LoginView):
+    template_name = 'interns/login.html'
+    authentication_form = InternLoginForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            if request.user.is_staff or request.user.is_superuser:
+                return redirect('admin_dashboard')
+            return redirect('home')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        user = form.get_user()
+        login(self.request, user)
+        if user.is_staff or user.is_superuser:
+            return redirect('admin_dashboard')
+        return redirect('home')
+
+
+class LogoutView(View):
+    def get(self, request):
+        logout(request)
+        return redirect('login')
+
+
+class HomeView(LoginRequiredMixin, TemplateView):
+    template_name = 'interns/home.html'
+
+
+class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'interns/admin_dashboard.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Mocking active projects since there is no Project model yet
+        context['active_projects'] = 45
+        context['total_employees'] = Intern.objects.filter(status='approved', is_staff=False).count()
+        context['recent_requests'] = Intern.objects.filter(status='pending').order_by('-date_joined')[:5]
+        return context
+
+
+class AdminEmployeeApprovalView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'interns/employee_approval.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        queryset = Intern.objects.filter(status='pending', is_staff=False).order_by('-date_joined')
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(full_name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(transaction_id__icontains=search_query)
             )
-            return redirect('login')
-    else:
-        form = InternRegistrationForm()
-    return render(request, 'interns/register.html', {'form': form})
+            
+        # Pagination functionality
+        paginator = Paginator(queryset, 10)  # Show 10 requests per page
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context['pending_interns'] = page_obj
+        context['page_obj'] = page_obj
+        context['search_query'] = search_query
+        context['total_count'] = queryset.count()
+        return context
 
 
-def login_view(request):
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-    if request.method == 'POST':
-        form = InternLoginForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            messages.success(request, f"Welcome back, {user.full_name.split()[0]}!")
-            return redirect('dashboard')
-        else:
-            messages.error(request, "Invalid email or password. Please try again.")
-    else:
-        form = InternLoginForm()
-    return render(request, 'interns/login.html', {'form': form})
+class AdminEmployeeActionView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def post(self, request, pk, action):
+        intern = get_object_or_404(Intern, pk=pk)
+        if action == 'approve':
+            intern.status = 'approved'
+        elif action == 'reject':
+            intern.status = 'rejected'
+        intern.save()
+        return redirect('employee_approval')
 
 
-def logout_view(request):
-    logout(request)
-    messages.info(request, "You have been logged out successfully.")
-    return redirect('login')
+class AdminEmployeeListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'interns/employee_list.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        queryset = Intern.objects.filter(status='approved', is_staff=False).order_by('-date_joined')
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(full_name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(employee_id__icontains=search_query)
+            )
+            
+        # Department filter
+        department_query = self.request.GET.get('department', '')
+        if department_query:
+            queryset = queryset.filter(department=department_query)
+            
+        # Status filter (using is_active)
+        status_query = self.request.GET.get('status', '')
+        if status_query == 'active':
+            queryset = queryset.filter(is_active=True)
+        elif status_query == 'inactive':
+            queryset = queryset.filter(is_active=False)
+            
+        # Pagination functionality
+        paginator = Paginator(queryset, 10)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context['approved_interns'] = page_obj
+        context['page_obj'] = page_obj
+        context['search_query'] = search_query
+        context['department_query'] = department_query
+        context['status_query'] = status_query
+        context['departments'] = DEPARTMENT_CHOICES
+        context['total_count'] = queryset.count()
+        return context
+
+class ProfileView(LoginRequiredMixin, TemplateView):
+    template_name = 'interns/profile.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        intern = self.request.user
+        context.update({
+            'intern': intern,
+            'educations': intern.education.all(),
+            'certifications': intern.certifications.all(),
+            'skills': intern.get_skills_list(),
+        })
+        return context
 
 
-@login_required
-def dashboard_view(request):
-    intern = request.user
-    educations = intern.education.all()
-    certifications = intern.certifications.all()
-    skills = intern.get_skills_list()
-    context = {
-        'intern': intern,
-        'educations': educations,
-        'certifications': certifications,
-        'skills': skills,
-        'completion': intern.completion_percentage,
-    }
-    return render(request, 'interns/dashboard.html', context)
+class UpdateProfileView(LoginRequiredMixin, UpdateView):
+    template_name = 'interns/update_profile.html'
+    form_class = UpdateProfileForm
+    success_url = reverse_lazy('profile')
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        return super().form_valid(form)
 
 
-@login_required
-def edit_personal(request):
-    if request.method == 'POST':
-        form = PersonalInfoForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Personal information updated successfully.")
-            return redirect('dashboard')
-    else:
-        form = PersonalInfoForm(instance=request.user)
-    return render(request, 'interns/profile_edit.html', {
-        'form': form,
-        'section': 'Personal Information',
-        'section_icon': '👤',
-    })
+class BaseProfileEditView(LoginRequiredMixin, UpdateView):
+    template_name = 'interns/profile_edit.html'
+    success_url = reverse_lazy('profile')
+    section = ""
+    section_icon = ""
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'section': self.section,
+            'section_icon': self.section_icon,
+        })
+        return context
+
+    def form_valid(self, form):
+        return super().form_valid(form)
 
 
-@login_required
-def edit_contact(request):
-    if request.method == 'POST':
-        form = ContactInfoForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Contact information updated successfully.")
-            return redirect('dashboard')
-    else:
-        form = ContactInfoForm(instance=request.user)
-    return render(request, 'interns/profile_edit.html', {
-        'form': form,
-        'section': 'Contact Information',
-        'section_icon': '📞',
-    })
+class EditPersonalView(BaseProfileEditView):
+    form_class = PersonalInfoForm
+    section = 'Personal Information'
+    section_icon = '👤'
 
 
-@login_required
-def edit_professional(request):
-    if request.method == 'POST':
-        form = ProfessionalInfoForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Professional information updated successfully.")
-            return redirect('dashboard')
-    else:
-        form = ProfessionalInfoForm(instance=request.user)
-    return render(request, 'interns/profile_edit.html', {
-        'form': form,
-        'section': 'Professional Information',
-        'section_icon': '💼',
-    })
+class EditContactView(BaseProfileEditView):
+    form_class = ContactInfoForm
+    section = 'Contact Information'
+    section_icon = '📞'
 
 
-@login_required
-def edit_financial(request):
-    if request.method == 'POST':
-        form = FinancialInfoForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Financial information updated successfully.")
-            return redirect('dashboard')
-    else:
-        form = FinancialInfoForm(instance=request.user)
-    return render(request, 'interns/profile_edit.html', {
-        'form': form,
-        'section': 'Financial Information',
-        'section_icon': '🏦',
-    })
+class EditProfessionalView(BaseProfileEditView):
+    form_class = ProfessionalInfoForm
+    section = 'Professional Information'
+    section_icon = '💼'
 
 
-@login_required
-def edit_statutory(request):
-    if request.method == 'POST':
-        form = StatutoryInfoForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Statutory information updated successfully.")
-            return redirect('dashboard')
-    else:
-        form = StatutoryInfoForm(instance=request.user)
-    return render(request, 'interns/profile_edit.html', {
-        'form': form,
-        'section': 'Statutory Information',
-        'section_icon': '📋',
-    })
+class EditFinancialView(BaseProfileEditView):
+    form_class = FinancialInfoForm
+    section = 'Financial Information'
+    section_icon = '🏦'
 
 
-@login_required
-def edit_family(request):
-    if request.method == 'POST':
-        form = FamilyInfoForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Family information updated successfully.")
-            return redirect('dashboard')
-    else:
-        form = FamilyInfoForm(instance=request.user)
-    return render(request, 'interns/profile_edit.html', {
-        'form': form,
-        'section': 'Family & Emergency Contacts',
-        'section_icon': '👨‍👩‍👧‍👦',
-    })
+class EditStatutoryView(BaseProfileEditView):
+    form_class = StatutoryInfoForm
+    section = 'Statutory Information'
+    section_icon = '📋'
 
 
-@login_required
-def add_education(request):
-    if request.method == 'POST':
-        form = EducationForm(request.POST)
-        if form.is_valid():
-            edu = form.save(commit=False)
-            edu.intern = request.user
-            edu.save()
-            messages.success(request, "Education record added.")
-            return redirect('dashboard')
-    else:
-        form = EducationForm()
-    return render(request, 'interns/profile_edit.html', {
-        'form': form,
-        'section': 'Add Education',
-        'section_icon': '🎓',
-    })
+class EditFamilyView(BaseProfileEditView):
+    form_class = FamilyInfoForm
+    section = 'Family & Emergency Contacts'
+    section_icon = '👨‍👩‍👧‍👦'
 
 
-@login_required
-def delete_education(request, pk):
-    edu = get_object_or_404(Education, pk=pk, intern=request.user)
-    edu.delete()
-    messages.success(request, "Education record removed.")
-    return redirect('dashboard')
+class AddEducationView(LoginRequiredMixin, CreateView):
+    model = Education
+    form_class = EducationForm
+    template_name = 'interns/profile_edit.html'
+    success_url = reverse_lazy('profile')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'section': 'Add Education',
+            'section_icon': '🎓',
+        })
+        return context
+
+    def form_valid(self, form):
+        form.instance.intern = self.request.user
+        return super().form_valid(form)
 
 
-@login_required
-def add_certification(request):
-    if request.method == 'POST':
-        form = CertificationForm(request.POST)
-        if form.is_valid():
-            cert = form.save(commit=False)
-            cert.intern = request.user
-            cert.save()
-            messages.success(request, "Certification added.")
-            return redirect('dashboard')
-    else:
-        form = CertificationForm()
-    return render(request, 'interns/profile_edit.html', {
-        'form': form,
-        'section': 'Add Certification',
-        'section_icon': '🏆',
-    })
+class DeleteEducationView(LoginRequiredMixin, DeleteView):
+    model = Education
+    success_url = reverse_lazy('profile')
+
+    def get_queryset(self):
+        return Education.objects.filter(intern=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        # Allow deletion via GET to maintain compatibility with existing links
+        return self.post(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
 
 
-@login_required
-def delete_certification(request, pk):
-    cert = get_object_or_404(Certification, pk=pk, intern=request.user)
-    cert.delete()
-    messages.success(request, "Certification removed.")
-    return redirect('dashboard')
+class AddCertificationView(LoginRequiredMixin, CreateView):
+    model = Certification
+    form_class = CertificationForm
+    template_name = 'interns/profile_edit.html'
+    success_url = reverse_lazy('profile')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'section': 'Add Certification',
+            'section_icon': '🏆',
+        })
+        return context
+
+    def form_valid(self, form):
+        form.instance.intern = self.request.user
+        return super().form_valid(form)
+
+
+class DeleteCertificationView(LoginRequiredMixin, DeleteView):
+    model = Certification
+    success_url = reverse_lazy('profile')
+
+    def get_queryset(self):
+        return Certification.objects.filter(intern=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        # Allow deletion via GET to maintain compatibility with existing links
+        return self.post(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
+
+
+class AdminProjectListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'interns/project_list.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        queryset = Project.objects.all().select_related('lead').order_by('-created_at')
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(client_department__icontains=search_query) |
+                Q(lead__first_name__icontains=search_query) |
+                Q(lead__last_name__icontains=search_query)
+            )
+            
+        # Status filter
+        status_query = self.request.GET.get('status', '')
+        if status_query:
+            queryset = queryset.filter(status=status_query)
+            
+        # Pagination functionality
+        paginator = Paginator(queryset, 10)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context['projects'] = page_obj
+        context['page_obj'] = page_obj
+        context['search_query'] = search_query
+        context['status_query'] = status_query
+        context['total_count'] = queryset.count()
+        return context

@@ -1,66 +1,219 @@
 {% extends 'base.html' %}
-{% block title %}Sign In – TechySpot IMS{% endblock %}
-{% block body_class %}auth-page{% endblock %}
+{% load static %}
+{% block title %}Corporate Portal - Login{% endblock %}
+{% block body_class %}corp-auth-bg{% endblock %}
 
-{% block content %}
-<div class="auth-wrapper">
-    <div class="auth-brand-panel">
-        <div class="brand-content">
-            <div class="brand-logo">
-                <span class="logo-icon">⚡</span>
-                <span class="logo-text">TechySpot</span>
-            </div>
-            <h1 class="brand-headline">Welcome<br>Back!</h1>
-            <p class="brand-sub">Sign in to access your intern dashboard and manage your profile.</p>
-            <div class="brand-features">
-                <div class="feature-item"><span>🔒</span> Secure access</div>
-                <div class="feature-item"><span>📁</span> Your data, always available</div>
-                <div class="feature-item"><span>🚀</span> Track your journey</div>
-            </div>
-        </div>
-        <div class="brand-shape"></div>
-    </div>
-    <div class="auth-form-panel">
-        <div class="auth-form-container">
-            <div class="auth-header">
-                <h2>Sign In</h2>
-                <p>Access your TechySpot intern portal</p>
-            </div>
-            <form method="post" class="auth-form" id="loginForm">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="id_login_email">Official Email</label>
-                    {{ form.username }}
-                    {% if form.username.errors %}<span class="field-error">{{ form.username.errors.0 }}</span>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="id_login_password">Password</label>
-                    <div class="password-wrap">
-                        {{ form.password }}
-                        <button type="button" class="toggle-pw" onclick="togglePassword('id_login_password', this)">👁️</button>
-                    </div>
-                    {% if form.password.errors %}<span class="field-error">{{ form.password.errors.0 }}</span>{% endif %}
-                </div>
-                {% if form.non_field_errors %}
-                <div class="form-error-box">{{ form.non_field_errors }}</div>
-                {% endif %}
-                <button type="submit" class="btn-primary btn-full" id="loginBtn">
-                    <span>Sign In</span>
-                    <span class="btn-arrow">→</span>
-                </button>
-            </form>
-            <p class="auth-switch">New intern? <a href="{% url 'register' %}">Create Account</a></p>
-        </div>
-    </div>
-</div>
+{% block extra_head %}
+<style>
+    body.corp-auth-bg {
+        background-color: #fafafa;
+        color: #1a1a1a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+        padding: 40px 20px;
+        box-sizing: border-box;
+    }
+    .corp-card {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        padding: 40px;
+        width: 100%;
+        max-width: 420px;
+        box-sizing: border-box;
+    }
+    .corp-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .corp-header h1 {
+        font-size: 24px;
+        color: #0f172a;
+        margin: 0 0 8px 0;
+        font-weight: 700;
+    }
+    .corp-header p {
+        color: #64748b;
+        font-size: 14px;
+        margin: 0;
+    }
+    .corp-form-group {
+        margin-bottom: 20px;
+    }
+    .corp-label-wrap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .corp-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+    }
+    .corp-forgot {
+        font-size: 13px;
+        color: #64748b;
+        text-decoration: none;
+    }
+    .corp-input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #334155;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+        background: #ffffff;
+    }
+    .corp-input:focus {
+        outline: none;
+        border-color: #345e37;
+    }
+    .corp-input::placeholder {
+        color: #94a3b8;
+    }
+    .corp-btn {
+        width: 100%;
+        padding: 12px;
+        background-color: #345e37;
+        color: #ffffff;
+        border: none;
+        border-radius: 4px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-top: 10px;
+    }
+    .corp-btn:hover {
+        background-color: #2a4c2c;
+    }
+    .corp-footer {
+        text-align: center;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #f1f5f9;
+        font-size: 13px;
+        color: #64748b;
+    }
+    .corp-footer a {
+        color: #0f172a;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .field-error { font-size: 12px; color: #dc2626; margin-top: 4px; display: block; }
+    .form-error-box { background: #fef2f2; color: #dc2626; padding: 10px; border-radius: 4px; font-size: 13px; margin-bottom: 15px; border: 1px solid #fca5a5; }
+    .form-error-box ul { list-style: none; padding: 0; margin: 0; }
+    .corp-page-footer {
+        margin-top: 40px;
+        text-align: center;
+        font-size: 13px;
+        color: #64748b;
+    }
+    .corp-page-footer-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 12px;
+    }
+    .corp-page-footer-links {
+        margin-bottom: 12px;
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+    }
+    .corp-page-footer-links a {
+        color: #64748b;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .corp-page-footer-links a:hover {
+        color: #334155;
+    }
+    .corp-logo-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 12px;
+    }
+    .corp-logo-img {
+        height: 75px;
+        width: auto;
+        display: block;
+    }
+
+    @media (max-width: 480px) {
+        body.corp-auth-bg {
+            padding: 20px 12px;
+        }
+        .corp-card {
+            padding: 24px 20px;
+            border-radius: 6px;
+        }
+        .corp-logo-img {
+            height: 60px;
+        }
+        .corp-page-footer {
+            margin-top: 24px;
+        }
+        .corp-page-footer-links {
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+    }
+</style>
 {% endblock %}
 
-{% block extra_scripts %}
-<script>
-function togglePassword(id, btn) {
-    const inp = document.getElementById(id);
-    if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
-    else { inp.type = 'password'; btn.textContent = '👁️'; }
-}
-</script>
+{% block content %}
+<div class="corp-card">
+    <div class="corp-header">
+        <div class="corp-logo-wrap">
+            <img class="corp-logo-img" src="{% static 'images/logo_cropped.png' %}" alt="COMPASS Logo">
+        </div>
+        <p>Secure Employee Login</p>
+    </div>
+    <form method="post" id="loginForm">
+        {% csrf_token %}
+        <div class="corp-form-group">
+            <div class="corp-label-wrap">
+                <label class="corp-label" for="id_login_email">Official Email</label>
+            </div>
+            <input type="email" name="username" class="corp-input" placeholder="name@corporate.com" autofocus="" required="" id="id_login_email">
+            {% if form.username.errors %}<span class="field-error">{{ form.username.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="corp-form-group">
+            <div class="corp-label-wrap">
+                <label class="corp-label" for="id_login_password">Password</label>
+                <a href="#" class="corp-forgot">Forgot Password?</a>
+            </div>
+            <input type="password" name="password" class="corp-input" placeholder="••••••••" required="" id="id_login_password">
+            {% if form.password.errors %}<span class="field-error">{{ form.password.errors.0 }}</span>{% endif %}
+        </div>
+        
+        {% if form.non_field_errors %}
+        <div class="form-error-box">{{ form.non_field_errors }}</div>
+        {% endif %}
+        
+        <button type="submit" class="corp-btn" id="loginBtn">Login</button>
+    </form>
+    
+    <div class="corp-footer">
+        Need an account? <a href="{% url 'register' %}">Register</a>
+    </div>
+</div>
+
+<div class="corp-page-footer">
+    <div class="corp-page-footer-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Contact Support</a>
+    </div>
+    <div>&copy; 2024 Corporate Systems. All rights reserved.</div>
+</div>
 {% endblock %}

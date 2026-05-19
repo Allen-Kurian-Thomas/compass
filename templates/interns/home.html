@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Employee Portal - Home{% endblock %}
+{% block body_class %}portal-bg{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/employee-portal.css' %}?v=4">
+{% endblock %}
+
+{% block content %}
+<div class="portal-layout">
+    <!-- Mobile Topbar -->
+    <header class="portal-mobile-header">
+        <button class="portal-menu-btn" onclick="togglePortalSidebar()">☰</button>
+        <span class="portal-mobile-title">Employee Portal</span>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+        <div class="portal-brand">
+            <h1>Employee<br>Portal</h1>
+            <p>Institutional Access</p>
+        </div>
+        <nav class="portal-nav">
+            <a href="{% url 'home' %}" class="active">
+                <span class="nav-icon">🏠</span> Home
+            </a>
+            <a href="{% url 'profile' %}">
+                <span class="nav-icon">👤</span> Profile
+            </a>
+            <a href="#">
+                <span class="nav-icon">🏢</span> Department
+            </a>
+            <a href="#">
+                <span class="nav-icon">⚙️</span> Settings
+            </a>
+        </nav>
+        <div class="portal-user-bottom" style="position: relative; cursor: pointer;" onclick="document.getElementById('logout-menu').classList.toggle('show');">
+            <div class="portal-user-avatar">
+                {% if request.user.profile_photo %}
+                    <img src="{{ request.user.profile_photo.url }}" alt="Avatar">
+                {% else %}
+                    {{ request.user.first_name|first }}{{ request.user.last_name|first }}
+                {% endif %}
+            </div>
+            <div class="portal-user-info">
+                <span class="portal-user-name">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+                <span class="portal-user-role">{{ request.user.designation|default:"Employee" }}</span>
+            </div>
+            <!-- Logout Dropdown -->
+            <div id="logout-menu" class="logout-dropdown">
+                <a href="{% url 'logout' %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+        <header class="portal-header">
+            <h2>Welcome back, {{ request.user.first_name|lower }} {{ request.user.last_name|lower }}</h2>
+            <p>Here's a quick overview of your employee portal today.</p>
+        </header>
+
+        <h3 class="portal-section-title">Quick Access</h3>
+        <div class="portal-grid-3">
+            <div class="portal-card">
+                <div class="portal-card-icon">📄</div>
+                <h3>Submit EOD Report</h3>
+                <p>Submit your end-of-day report to summarize your daily progress and tasks completed.</p>
+                <button class="portal-btn">Submit EOD</button>
+            </div>
+            <div class="portal-card">
+                <div class="portal-card-icon green">📅</div>
+                <h3>Request Time Off</h3>
+                <p>You have 14 days of PTO remaining this year.</p>
+                <button class="portal-btn">Submit Request</button>
+            </div>
+            <div class="portal-card">
+                <div class="portal-card-icon orange">🛡️</div>
+                <h3>MENU</h3>
+                <p>description</p>
+                <a href="#" class="portal-link" style="margin-top: 10px; display: inline-block;">Link or Button →</a>
+            </div>
+        </div>
+
+        <h3 class="portal-section-title">
+            Department Announcements
+            <a href="#">View All</a>
+        </h3>
+        <div class="announcement-list">
+            <div class="announcement-item green">
+                <div class="announcement-content">
+                    <h4>Q3 Town Hall Meeting Scheduled</h4>
+                    <p>Join leadership for a review of our quarterly performance and upcoming strategic initiatives.</p>
+                </div>
+                <div class="announcement-date">Oct 12, 2023</div>
+            </div>
+            <div class="announcement-item blue">
+                <div class="announcement-content">
+                    <h4>Updated IT Security Protocols</h4>
+                    <p>Please review the new mandatory guidelines for accessing internal systems via remote VPN.</p>
+                </div>
+                <div class="announcement-date">Oct 10, 2023</div>
+            </div>
+            <div class="announcement-item gray">
+                <div class="announcement-content">
+                    <h4>Office Refrigerator Cleaning</h4>
+                    <p>A friendly reminder that all items must be removed from the 3rd-floor breakroom fridge by Friday.</p>
+                </div>
+                <div class="announcement-date">Oct 05, 2023</div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

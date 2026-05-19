@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Employee Portal - Update Profile{% endblock %}
+{% block body_class %}portal-bg{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/employee-portal.css' %}?v=3">
+{% endblock %}
+
+{% block content %}
+<div class="portal-layout">
+    <!-- Mobile Topbar -->
+    <header class="portal-mobile-header">
+        <button class="portal-menu-btn" onclick="togglePortalSidebar()">☰</button>
+        <span class="portal-mobile-title">Employee Portal</span>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+        <div class="portal-brand">
+            <h1>Employee<br>Portal</h1>
+            <p>Institutional Access</p>
+        </div>
+        <nav class="portal-nav">
+            <a href="{% url 'home' %}">
+                <span class="nav-icon">🏠</span> Home
+            </a>
+            <a href="{% url 'profile' %}" class="active">
+                <span class="nav-icon">👤</span> Profile
+            </a>
+            <a href="#">
+                <span class="nav-icon">🏢</span> Department
+            </a>
+            <a href="#">
+                <span class="nav-icon">⚙️</span> Settings
+            </a>
+        </nav>
+        <div class="portal-user-bottom">
+            <div class="portal-user-avatar">
+                {% if request.user.profile_photo %}
+                    <img src="{{ request.user.profile_photo.url }}" alt="Avatar">
+                {% else %}
+                    <img src="https://ui-avatars.com/api/?name=Jane+Doe&background=1e293b&color=fff" alt="Avatar">
+                {% endif %}
+            </div>
+            <div class="portal-user-info">
+                <span class="portal-user-name">{{ request.user.first_name|default:"Jane" }} {{ request.user.last_name|default:"Doe" }}</span>
+                <span class="portal-user-role">{{ request.user.designation|default:"Senior Analyst" }}</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="update-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h2 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Update Profile</h2>
+                    <p style="font-size: 13px; color: #64748b; margin: 0;">Ensure your institutional records are accurate and up to date.</p>
+                </div>
+                <div class="update-actions" style="display: flex; gap: 12px;">
+                    <a href="{% url 'profile' %}" class="portal-btn portal-btn-outline" style="width: auto; padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600;">Cancel</a>
+                    <button type="submit" class="portal-btn" style="width: auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background-color: #325c35; color: white; border-radius: 4px; font-size: 13px; font-weight: 600;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save Changes
+                    </button>
+                </div>
+            </div>
+
+            {% if form.errors %}
+                <div style="background-color: #fef2f2; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 24px;">
+                    Please correct the errors below.
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="profile-2-col-layout">
+                
+                <!-- Left Column -->
+                <div class="profile-column">
+                    <!-- Personal Information -->
+                    <div class="portal-card">
+                        <div class="info-card-header">
+                            <span class="nav-icon">🏥</span> Personal Information
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                {{ form.date_of_birth }}
+                            </div>
+                            <div class="form-group">
+                                <label>Gender</label>
+                                {{ form.gender }}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Blood Group</label>
+                                {{ form.blood_group }}
+                            </div>
+                            <div class="form-group">
+                                <label>Marital Status</label>
+                                {{ form.marital_status }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Details -->
+                    <div class="portal-card">
+                        <div class="info-card-header">
+                            <span class="nav-icon">📇</span> Contact Details
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>Current Address</label>
+                            {{ form.current_address }}
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>Permanent Address</label>
+                            {{ form.permanent_address }}
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Personal Phone</label>
+                                {{ form.personal_phone }}
+                            </div>
+                            <div class="form-group">
+                                <label>Official Email</label>
+                                {{ form.email }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Education & Certifications -->
+                    <div class="portal-card">
+                        <div class="info-card-header">
+                            <span class="nav-icon">🎓</span> Education & Certifications
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>About Me (Bio)</label>
+                            {{ form.bio }}
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Highest Degree</label>
+                                {{ form.highest_degree }}
+                            </div>
+                            <div class="form-group">
+                                <label>College/University</label>
+                                {{ form.college_university }}
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Year of Graduation</label>
+                                {{ form.graduation_year }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Certifications (comma separated)</label>
+                            {{ form.certifications_summary }}
+                        </div>
+                    </div>
+
+                    <!-- Family & Emergency -->
+                    <div class="portal-card">
+                        <div class="info-card-header">
+                            <span class="nav-icon">👨‍👩‍👧</span> Family & Emergency
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Father's Name</label>
+                                {{ form.father_name }}
+                            </div>
+                            <div class="form-group">
+                                <label>Mother's Name</label>
+                                {{ form.mother_name }}
+                            </div>
+                        </div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin: 16px 0 8px 0;">Emergency Contact</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Name</label>
+                                {{ form.emergency_contact_name }}
+                            </div>
+                            <div class="form-group">
+                                <label>Relation</label>
+                                {{ form.emergency_contact_relation }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            {{ form.emergency_contact_phone }}
+                        </div>
+                    </div>
+
+                    <!-- Photo Upload -->
+                    <div class="portal-card">
+                        <div class="info-card-header">
+                            <span class="nav-icon">📄</span> Photo
+                        </div>
+                        <div class="upload-box" style="border:1px dashed #cbd5e1; border-radius:6px; padding:24px; text-align:center; background-color:#f8fafc; margin-bottom:12px;">
+                            <div class="upload-icon" style="font-size:20px; color:#64748b; margin-bottom:8px;">🖼️</div>
+                            <div class="upload-text" style="font-size:12px; font-weight:600; color:#0f172a; margin-bottom:4px;">Profile Photo</div>
+                            {{ form.profile_photo }}
+                        </div>
+                        {% if request.user.profile_photo %}
+                            <div class="file-item" style="display:flex; justify-content:space-between; align-items:center; background-color:#f1f5f9; padding:8px 12px; border-radius:4px; font-size:12px;">
+                                <div class="file-item-name" style="display:flex; align-items:center; gap:8px;">
+                                    <span style="color:#325c35;">✅</span> Current Photo: {{ request.user.profile_photo.name }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="profile-column">
+                    
+                    <!-- Professional -->
+                    <div class="portal-card">
+                        <div class="info-card-header">
+                            <span class="nav-icon">💼</span> Professional
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>Designation</label>
+                            {{ form.designation }}
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>Primary Unit</label>
+                            {{ form.primary_unit }}
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>Reporting Manager</label>
+                            {{ form.reporting_manager }}
+                        </div>
+                        <div class="form-group">
+                            <label>Total Experience</label>
+                            {{ form.total_experience }}
+                        </div>
+                    </div>
+
+                    <!-- Financial Details -->
+                    <div class="portal-card">
+                        <div class="info-card-header">
+                            <span class="nav-icon">🏛️</span> Financial Details
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>Bank Name</label>
+                            {{ form.bank_name }}
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>Account Number</label>
+                            {{ form.account_number }}
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>IFSC Code</label>
+                            {{ form.ifsc_code }}
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>PAN Number</label>
+                            {{ form.pan_number }}
+                        </div>
+                        <div class="form-group">
+                            <label>Aadhaar Number</label>
+                            {{ form.aadhaar_number }}
+                        </div>
+                    </div>
+
+                    <!-- Statutory Info -->
+                    <div class="portal-card">
+                        <div class="info-card-header">
+                            <span class="nav-icon">⚖️</span> Statutory Info
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>PF UAN</label>
+                            {{ form.pf_uan }}
+                        </div>
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label>PF Account Number</label>
+                            {{ form.pf_account_number }}
+                        </div>
+                        <div class="form-group">
+                            <label>Passport Number</label>
+                            {{ form.passport_number }}
+                        </div>
+                    </div>
+
+                    <!-- Technical Skills -->
+                    <div class="portal-card">
+                        <div class="info-card-header">
+                            <span class="nav-icon">‹›</span> Technical Skills
+                        </div>
+                        <div id="skills-container" style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
+                            <!-- Tags will be rendered here -->
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            {{ form.technical_skills }}
+                        </div>
+                        <p style="font-size: 11px; color: #64748b; margin-top: 8px;">Enter skills separated by commas.</p>
+                    </div>
+
+                    <!-- Documentation -->
+                    <div class="portal-card">
+                        <div class="info-card-header">
+                            <span class="nav-icon">📄</span> Documentation
+                        </div>
+                        <div class="upload-box" style="border:1px dashed #cbd5e1; border-radius:6px; padding:24px; text-align:center; background-color:#f8fafc; margin-bottom:12px;">
+                            <div class="upload-icon" style="font-size:20px; color:#64748b; margin-bottom:8px;">📄</div>
+                            <div class="upload-text" style="font-size:12px; font-weight:600; color:#0f172a; margin-bottom:4px;">Resume</div>
+                            {{ form.resume }}
+                        </div>
+                        {% if request.user.resume %}
+                            <div class="file-item" style="display:flex; justify-content:space-between; align-items:center; background-color:#f1f5f9; padding:8px 12px; border-radius:4px; font-size:12px;">
+                                <div class="file-item-name" style="display:flex; align-items:center; gap:8px;">
+                                    <span style="color:#325c35;">✅</span> Current Resume: <a href="{{ request.user.resume.url }}" target="_blank">{{ request.user.resume.name }}</a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </form>
+    </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const skillsInput = document.getElementById('skills-input');
+    const skillsContainer = document.getElementById('skills-container');
+
+    function renderTags() {
+        skillsContainer.innerHTML = '';
+        const skills = skillsInput.value.split(',').map(s => s.trim()).filter(s => s !== '');
+        skills.forEach((skill, index) => {
+            const tag = document.createElement('span');
+            tag.className = 'skill-pill blue';
+            tag.style.display = 'inline-flex';
+            tag.style.alignItems = 'center';
+            tag.style.gap = '4px';
+            tag.innerHTML = `${skill} <span style="cursor:pointer; font-weight:bold;" onclick="removeTag(${index})">×</span>`;
+            skillsContainer.appendChild(tag);
+        });
+    }
+
+    window.removeTag = function(index) {
+        let skills = skillsInput.value.split(',').map(s => s.trim()).filter(s => s !== '');
+        skills.splice(index, 1);
+        skillsInput.value = skills.join(', ');
+        renderTags();
+    };
+
+    skillsInput.addEventListener('input', renderTags);
+    renderTags(); // Initial render
+});
+</script>
+{% endblock %}

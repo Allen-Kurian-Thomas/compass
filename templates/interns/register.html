@@ -1,74 +1,743 @@
 {% extends 'base.html' %}
-{% block title %}Register – TechySpot IMS{% endblock %}
-{% block body_class %}auth-page{% endblock %}
+{% load static %}
+{% block title %}Employee Registration{% endblock %}
+{% block body_class %}corp-auth-bg{% endblock %}
+
+{% block extra_head %}
+<style>
+    body.corp-auth-bg {
+        background-color: #fafafa;
+        color: #1a1a1a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+        padding: 40px 20px;
+    }
+
+    .corp-card {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        padding: 40px;
+        width: 100%;
+        max-width: 480px;
+        box-sizing: border-box;
+    }
+
+    .corp-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .corp-header h1 {
+        font-size: 24px;
+        color: #0f172a;
+        margin: 0 0 8px 0;
+        font-weight: 700;
+    }
+
+    .corp-header p {
+        color: #64748b;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .corp-form-group {
+        margin-bottom: 20px;
+    }
+
+    .corp-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 8px;
+    }
+
+    .corp-input-wrap {
+        position: relative;
+    }
+
+    .corp-input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #334155;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+        background: #ffffff;
+    }
+
+    .corp-input:focus {
+        outline: none;
+        border-color: #345e37;
+    }
+
+    .corp-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .corp-input.with-icon {
+        padding-right: 40px;
+    }
+
+    .corp-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #345e37;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .corp-icon-lock {
+        color: #64748b;
+    }
+
+    .corp-input-disabled {
+        background-color: #f8fafc;
+        color: #64748b;
+        cursor: not-allowed;
+    }
+
+    .corp-helper {
+        display: block;
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 6px;
+    }
+
+    select.corp-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px;
+    }
+
+    .corp-btn {
+        width: 100%;
+        padding: 12px;
+        background-color: #345e37;
+        color: #ffffff;
+        border: none;
+        border-radius: 4px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-top: 10px;
+    }
+
+    .corp-btn:hover {
+        background-color: #2a4c2c;
+    }
+
+    .corp-btn-outline {
+        background-color: #ffffff;
+        color: #0f172a;
+        border: 1px solid #cbd5e1;
+        margin-top: 12px;
+    }
+
+    .corp-btn-outline:hover {
+        background-color: #f8fafc;
+    }
+
+    .field-error {
+        font-size: 12px;
+        color: #dc2626;
+        margin-top: 4px;
+        display: block;
+    }
+
+    .form-error-box {
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 13px;
+        margin-bottom: 15px;
+        border: 1px solid #fca5a5;
+    }
+
+    .form-error-box ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .corp-page-footer {
+        margin-top: 40px;
+        text-align: center;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .corp-page-footer-links {
+        margin-bottom: 12px;
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+    }
+
+    .corp-page-footer-links a {
+        color: #64748b;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .corp-page-footer-links a:hover {
+        color: #334155;
+    }
+
+    /* Payment Modal Styles */
+    .payment-modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        overflow-y: auto;
+    }
+
+    .payment-modal-overlay.active {
+        display: flex;
+    }
+
+    .payment-modal {
+        background: #ffffff;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 480px;
+        max-height: 90vh;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        overflow-y: auto;
+        animation: modalSlideUp 0.3s ease-out;
+    }
+
+    @keyframes modalSlideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .payment-modal-header {
+        padding: 24px 24px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .payment-modal-header h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .payment-modal-close {
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        border-radius: 4px;
+    }
+
+    .payment-modal-close:hover {
+        background-color: #f1f5f9;
+    }
+
+    .payment-modal-body {
+        padding: 24px;
+    }
+
+    .payment-instruction {
+        font-size: 14px;
+        color: #64748b;
+        line-height: 1.5;
+        margin-bottom: 24px;
+    }
+
+    .qr-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .qr-box {
+        padding: 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        background: #ffffff;
+    }
+
+    .qr-image {
+        width: 180px;
+        height: 180px;
+        display: block;
+    }
+
+    .qr-caption {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+
+    .payment-field-group {
+        margin-bottom: 16px;
+    }
+
+    .payment-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 8px;
+    }
+
+    .upload-area {
+        border: 2px dashed #e2e8f0;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        position: relative;
+    }
+
+    .upload-area:hover {
+        border-color: #345e37;
+    }
+
+    .upload-icon {
+        color: #94a3b8;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .upload-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .upload-hint {
+        font-size: 11px;
+        color: #94a3b8;
+        display: block;
+    }
+
+    .payment-notice {
+        font-size: 12px;
+        color: #1e293b;
+        line-height: 1.6;
+        margin-top: 20px;
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 6px;
+        border-left: 4px solid #345e37;
+    }
+
+    .payment-modal-footer {
+        padding: 16px 24px 24px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        background: #f8fafc;
+    }
+
+    .btn-cancel {
+        padding: 10px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+    }
+
+    .btn-submit-proof {
+        padding: 10px;
+        background: #345e37;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        color: #ffffff;
+        cursor: pointer;
+    }
+
+    .btn-submit-proof:hover {
+        background-color: #2a4c2c;
+    }
+
+    #screenshot-preview-name {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #345e37;
+        font-weight: 600;
+        display: none;
+    }
+
+    .corp-logo-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 12px;
+    }
+
+    .corp-logo-img {
+        height: 75px;
+        width: auto;
+        display: block;
+    }
+
+    @media (max-width: 480px) {
+        body.corp-auth-bg {
+            padding: 20px 12px;
+        }
+        .corp-card {
+            padding: 24px 20px;
+            border-radius: 6px;
+        }
+        .corp-logo-img {
+            height: 60px;
+        }
+        .payment-modal {
+            max-height: 95vh;
+            border-radius: 8px;
+        }
+        .payment-modal-header {
+            padding: 16px 20px 12px;
+        }
+        .payment-modal-body {
+            padding: 16px 20px;
+        }
+        .payment-modal-footer {
+            padding: 12px 20px 20px;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .qr-image {
+            width: 140px;
+            height: 140px;
+        }
+        .corp-page-footer-links {
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-    <div class="auth-brand-panel">
-        <div class="brand-content">
-            <div class="brand-logo">
-                <span class="logo-icon">⚡</span>
-                <span class="logo-text">TechySpot</span>
+<div class="corp-card">
+    <div class="corp-header">
+        <div class="corp-logo-wrap">
+            <img class="corp-logo-img" src="{% static 'images/logo_cropped.png' %}" alt="COMPASS Logo">
+        </div>
+        <h1>Registration</h1>
+        <p>Please complete your corporate profile to proceed.</p>
+    </div>
+    <form method="post" id="registerForm" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_full_name">Full Name</label>
+            <input type="text" name="full_name" class="corp-input" placeholder="Jane Doe" required id="id_full_name"
+                value="{{ form.full_name.value|default:'' }}">
+            {% if form.full_name.errors %}<span class="field-error">{{ form.full_name.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_email">Official Email</label>
+            <input type="email" name="email" class="corp-input" placeholder="jane.doe@company.com"
+                required id="id_email" value="{{ form.email.value|default:'' }}">
+            {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
+        </div>
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_password1">Password</label>
+            <div class="corp-input-wrap">
+                <input type="password" name="password1" class="corp-input with-icon" placeholder="••••••••" required
+                    id="id_password1">
+                <div class="corp-icon" id="password-tick" style="display: none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#345e37">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    </svg>
+                </div>
             </div>
-            <h1 class="brand-headline">Intern Management<br>System</h1>
-            <p class="brand-sub">Your gateway to a structured and rewarding internship experience.</p>
-            <div class="brand-features">
-                <div class="feature-item"><span>🎯</span> Track your progress</div>
-                <div class="feature-item"><span>📊</span> Manage your profile</div>
-                <div class="feature-item"><span>🤝</span> Connect with your team</div>
+            <span class="corp-helper">Min 8 chars, mixed case, numbers, special characters.</span>
+            {% if form.password1.errors %}<span class="field-error">{{ form.password1.errors.0 }}</span>{% endif %}
+        </div>
+
+        <!-- Hidden confirm password to satisfy django form backend -->
+        <input type="hidden" name="password2" id="id_password2">
+
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_date_of_joining">Date of Joining</label>
+            <div class="corp-input-wrap">
+                <!-- Getting today's date formatted -->
+                {% now "m/d/Y" as today_date %}
+                <input type="text" class="corp-input with-icon corp-input-disabled" value="{{ today_date }}" disabled
+                    id="id_date_of_joining">
+                <div class="corp-icon corp-icon-lock">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
             </div>
         </div>
-        <div class="brand-shape"></div>
-    </div>
-    <div class="auth-form-panel">
-        <div class="auth-form-container">
-            <div class="auth-header">
-                <h2>Create Account</h2>
-                <p>Join the TechySpot intern portal</p>
-            </div>
-            <form method="post" class="auth-form" id="registerForm" novalidate>
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="id_full_name">Full Name</label>
-                    {{ form.full_name }}
-                    {% if form.full_name.errors %}<span class="field-error">{{ form.full_name.errors.0 }}</span>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="id_email">Official Email</label>
-                    {{ form.email }}
-                    {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
-                </div>
-                <div class="form-group">
-                    <label for="id_department">Department / Stream</label>
-                    {{ form.department }}
-                    {% if form.department.errors %}<span class="field-error">{{ form.department.errors.0 }}</span>{% endif %}
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="id_password1">Password</label>
-                        {{ form.password1 }}
-                        {% if form.password1.errors %}<span class="field-error">{{ form.password1.errors.0 }}</span>{% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="id_password2">Confirm Password</label>
-                        {{ form.password2 }}
-                        {% if form.password2.errors %}<span class="field-error">{{ form.password2.errors.0 }}</span>{% endif %}
-                    </div>
-                </div>
-                {% if form.non_field_errors %}
-                <div class="form-error-box">{{ form.non_field_errors }}</div>
+
+        <div class="corp-form-group">
+            <label class="corp-label" for="id_department">Department / Stream</label>
+            <select name="department" class="corp-input" required id="id_department">
+                <option value="" {% if not form.department.value %}selected{% endif %}>Select Department</option>
+                {% for value, name in form.fields.department.choices %}
+                {% if value %}
+                <option value="{{ value }}" {% if form.department.value == value %}selected{% endif %}>{{ name }}</option>
                 {% endif %}
-                <div class="info-banner">
-                    <span>🔔</span>
-                    <span>Your account will be reviewed by HR. You'll receive your Employee ID upon approval.</span>
-                </div>
-                <button type="submit" class="btn-primary btn-full" id="registerBtn">
-                    <span>Create Account</span>
-                    <span class="btn-arrow">→</span>
-                </button>
-            </form>
-            <p class="auth-switch">Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
+                {% endfor %}
+            </select>
+            {% if form.department.errors %}<span class="field-error">{{ form.department.errors.0 }}</span>{% endif %}
         </div>
-    </div>
+
+
+
+        {% if form.non_field_errors %}
+        <div class="form-error-box">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <button type="submit" class="corp-btn" id="registerBtn">Register</button>
+        <a href="{% url 'login' %}"><button type="button" class="corp-btn corp-btn-outline"
+                style="width: 100%;">Cancel</button></a>
+
+        <!-- Payment Modal Overlay (Inside Form to include inputs) -->
+        <div class="payment-modal-overlay" id="paymentModal">
+            <div class="payment-modal">
+                <div class="payment-modal-header">
+                    <h2>Payment Required</h2>
+                    <button type="button" class="payment-modal-close" onclick="closePaymentModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="payment-modal-body">
+                    <p class="payment-instruction">
+                        To complete the registration process, please make a payment of <strong>₹3000</strong> using the
+                        UPI
+                        QR code below.
+                    </p>
+
+                    <div class="qr-container">
+                        <div class="qr-box">
+                            <img src="{{ qr_code_url }}" alt="UPI QR Code" class="qr-image">
+                        </div>
+                        <span class="qr-caption">Scan using any UPI app to pay <strong>{{ upi_name }}</strong> ({{ upi_id }})</span>
+                    </div>
+
+                    <div class="payment-field-group">
+                        <label class="payment-label" for="id_transaction_id">Payment Reference (optional)</label>
+                        <input type="text" name="transaction_id" id="id_transaction_id" class="corp-input"
+                            placeholder="Enter UTR or Transaction ID">
+                    </div>
+
+                    <div class="payment-field-group">
+                        <label class="payment-label">Upload Transaction Screenshot</label>
+                        <div class="upload-area" onclick="document.getElementById('id_payment_screenshot').click()">
+                            <input type="file" name="payment_screenshot" id="id_payment_screenshot"
+                                style="display: none;" accept="image/*" onchange="handleFileSelect(this)">
+                            <span class="upload-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </span>
+                            <span class="upload-text">Click or Drag to Upload</span>
+                            <span class="upload-hint">PNG, JPG up to 2MB</span>
+                            <div id="screenshot-preview-name"></div>
+                        </div>
+                    </div>
+
+                    <div class="payment-notice">
+                        <strong>Please note:</strong> Your registration will be approved within 3-4 business days after
+                        the payment has been successfully confirmed. For assistance, contact: +919061401943.
+                    </div>
+                </div>
+                <div class="payment-modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closePaymentModal()">Cancel</button>
+                    <button type="button" class="btn-submit-proof" id="submitProofBtn">Submit Proof</button>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
+
+<div class="corp-page-footer">
+    <div class="corp-page-footer-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Contact Support</a>
+    </div>
+    <div>&copy; 2024 Corporate Systems. All rights reserved.</div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const registerForm = document.getElementById('registerForm');
+    const registerBtn = document.getElementById('registerBtn');
+    const paymentModal = document.getElementById('paymentModal');
+    const submitProofBtn = document.getElementById('submitProofBtn');
+    const password1Input = document.getElementById('id_password1');
+    const password2Input = document.getElementById('id_password2');
+
+    const passwordTick = document.getElementById('password-tick');
+
+    // Sync password1 to password2 and validate strength
+    password1Input.addEventListener('input', () => {
+        const val = password1Input.value;
+        password2Input.value = val;
+
+        const hasMinLength = val.length >= 8;
+        const hasUppercase = /[A-Z]/.test(val);
+        const hasLowercase = /[a-z]/.test(val);
+        const hasNumber = /[0-9]/.test(val);
+        const hasSpecial = /[^A-Za-z0-9]/.test(val);
+
+        if (hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial) {
+            passwordTick.style.display = 'flex';
+        } else {
+            passwordTick.style.display = 'none';
+        }
+    });
+
+    // Handle Register Button Click
+    registerBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        // Clear any old dynamically shown duplicate errors
+        const existingError = document.getElementById('email-duplicate-error');
+        if (existingError) {
+            existingError.remove();
+        }
+
+        // Check if main registration form is valid
+        if (registerForm.checkValidity()) {
+            const emailInput = document.getElementById('id_email');
+            const email = emailInput.value.trim();
+
+            // Disable button and show checking spinner/state
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Checking...';
+
+            fetch(`/check-email/?email=${encodeURIComponent(email)}`)
+                .then(response => response.json())
+                .then(data => {
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = 'Register';
+
+                    if (data.exists) {
+                        const emailWrap = emailInput.closest('.corp-form-group');
+                        const errorSpan = document.createElement('span');
+                        errorSpan.className = 'field-error';
+                        errorSpan.id = 'email-duplicate-error';
+                        errorSpan.textContent = 'Intern with this Email already exists.';
+                        emailWrap.appendChild(errorSpan);
+                        emailInput.focus();
+                    } else {
+                        openPaymentModal();
+                    }
+                })
+                .catch(err => {
+                    console.error('Error checking email:', err);
+                    registerBtn.disabled = false;
+                    registerBtn.textContent = 'Register';
+                    // Fallback to open modal in case of network issue
+                    openPaymentModal();
+                });
+        } else {
+            // Trigger browser validation UI
+            registerForm.reportValidity();
+        }
+    });
+
+    function openPaymentModal() {
+        paymentModal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    function closePaymentModal() {
+        paymentModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function handleFileSelect(input) {
+        const previewName = document.getElementById('screenshot-preview-name');
+        if (input.files && input.files[0]) {
+            previewName.textContent = 'Selected: ' + input.files[0].name;
+            previewName.style.display = 'block';
+        } else {
+            previewName.style.display = 'none';
+        }
+    }
+
+    // Final Form Submission from Modal
+    submitProofBtn.addEventListener('click', function () {
+        const screenshotInput = document.getElementById('id_payment_screenshot');
+
+        if (!screenshotInput.files || screenshotInput.files.length === 0) {
+            alert('Please upload a transaction screenshot proof.');
+            return;
+        }
+
+        // Final sync of passwords just in case
+        password2Input.value = password1Input.value;
+
+        // Show loading state
+        submitProofBtn.disabled = true;
+        submitProofBtn.textContent = 'Submitting...';
+
+        // Submit the actual form
+        registerForm.submit();
+    });
+
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && paymentModal.classList.contains('active')) {
+            closePaymentModal();
+        }
+    });
+</script>
 {% endblock %}

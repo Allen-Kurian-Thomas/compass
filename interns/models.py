@@ -95,6 +95,7 @@ class Intern(AbstractBaseUser, PermissionsMixin):
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES, blank=True)
     marital_status = models.CharField(max_length=20, choices=MARITAL_STATUS_CHOICES, blank=True)
     profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
+    resume = models.FileField(upload_to='resumes/', blank=True, null=True)
     bio = models.TextField(blank=True)
 
     # Contact
@@ -128,8 +129,18 @@ class Intern(AbstractBaseUser, PermissionsMixin):
     emergency_contact_phone = models.CharField(max_length=20, blank=True)
     emergency_contact_relation = models.CharField(max_length=50, blank=True)
 
+    # Registration Payment
+    transaction_id = models.CharField(max_length=100, blank=True)
+    payment_screenshot = models.ImageField(upload_to='payment_screenshots/', blank=True, null=True)
+
     # Technical skills (stored as comma-separated tags)
     technical_skills = models.TextField(blank=True, help_text="Comma-separated skills e.g. Python, Django")
+
+    # Education & Certifications Summary (for Profile Update)
+    highest_degree = models.CharField(max_length=150, blank=True)
+    college_university = models.CharField(max_length=200, blank=True)
+    graduation_year = models.CharField(max_length=10, blank=True)
+    certifications_summary = models.TextField(blank=True, help_text="Comma separated certifications")
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['full_name']
@@ -194,3 +205,27 @@ class Certification(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.platform}"
+
+
+class Project(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('finished', 'Finished'),
+        ('abandoned', 'Abandoned'),
+    ]
+
+    name = models.CharField(max_length=200)
+    client_department = models.CharField(max_length=200)
+    lead = models.ForeignKey(Intern, on_delete=models.SET_NULL, null=True, related_name='led_projects')
+    timeline = models.CharField(max_length=100)
+    budget = models.CharField(max_length=50)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Project'
+        verbose_name_plural = 'Projects'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.name
