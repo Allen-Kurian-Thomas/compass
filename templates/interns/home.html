@@ -35,22 +35,28 @@
                 <span class="nav-icon">⚙️</span> Settings
             </a>
         </nav>
-        <div class="portal-user-bottom" style="position: relative; cursor: pointer;" onclick="document.getElementById('logout-menu').classList.toggle('show');">
+        <div class="portal-user-bottom" style="position: relative; cursor: pointer;"
+            onclick="document.getElementById('logout-menu').classList.toggle('show');">
             <div class="portal-user-avatar">
                 {% if request.user.profile_photo %}
-                    <img src="{{ request.user.profile_photo.url }}" alt="Avatar">
+                <img src="{{ request.user.profile_photo.url }}" alt="Avatar">
                 {% else %}
-                    {{ request.user.first_name|first }}{{ request.user.last_name|first }}
+                {{ request.user.first_name|first }}{{ request.user.last_name|first }}
                 {% endif %}
             </div>
             <div class="portal-user-info">
                 <span class="portal-user-name">{{ request.user.first_name }} {{ request.user.last_name }}</span>
-                <span class="portal-user-role">{{ request.user.designation|default:"Employee" }}</span>
+                <span class="portal-user-role">{{ request.user.designation|default:"Intern" }}</span>
             </div>
             <!-- Logout Dropdown -->
             <div id="logout-menu" class="logout-dropdown">
                 <a href="{% url 'logout' %}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
                     Logout
                 </a>
             </div>
@@ -108,7 +114,8 @@
             <div class="announcement-item gray">
                 <div class="announcement-content">
                     <h4>Office Refrigerator Cleaning</h4>
-                    <p>A friendly reminder that all items must be removed from the 3rd-floor breakroom fridge by Friday.</p>
+                    <p>A friendly reminder that all items must be removed from the 3rd-floor breakroom fridge by Friday.
+                    </p>
                 </div>
                 <div class="announcement-date">Oct 05, 2023</div>
             </div>

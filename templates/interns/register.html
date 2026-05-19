@@ -422,32 +422,40 @@
         body.corp-auth-bg {
             padding: 20px 12px;
         }
+
         .corp-card {
             padding: 24px 20px;
             border-radius: 6px;
         }
+
         .corp-logo-img {
             height: 60px;
         }
+
         .payment-modal {
             max-height: 95vh;
             border-radius: 8px;
         }
+
         .payment-modal-header {
             padding: 16px 20px 12px;
         }
+
         .payment-modal-body {
             padding: 16px 20px;
         }
+
         .payment-modal-footer {
             padding: 12px 20px 20px;
             grid-template-columns: 1fr;
             gap: 10px;
         }
+
         .qr-image {
             width: 140px;
             height: 140px;
         }
+
         .corp-page-footer-links {
             gap: 16px;
             flex-wrap: wrap;
@@ -475,8 +483,8 @@
         </div>
         <div class="corp-form-group">
             <label class="corp-label" for="id_email">Official Email</label>
-            <input type="email" name="email" class="corp-input" placeholder="jane.doe@company.com"
-                required id="id_email" value="{{ form.email.value|default:'' }}">
+            <input type="email" name="email" class="corp-input" placeholder="jane.doe@company.com" required
+                id="id_email" value="{{ form.email.value|default:'' }}">
             {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
         </div>
         <div class="corp-form-group">
@@ -562,7 +570,8 @@
                         <div class="qr-box">
                             <img src="{{ qr_code_url }}" alt="UPI QR Code" class="qr-image">
                         </div>
-                        <span class="qr-caption">Scan using any UPI app to pay <strong>{{ upi_name }}</strong> ({{ upi_id }})</span>
+                        <span class="qr-caption">Scan using any UPI app to pay <strong>{{ upi_name }}</strong>
+                            ({{upi_id }})</span>
                     </div>
 
                     <div class="payment-field-group">
@@ -673,7 +682,7 @@
                         const errorSpan = document.createElement('span');
                         errorSpan.className = 'field-error';
                         errorSpan.id = 'email-duplicate-error';
-                        errorSpan.textContent = 'Intern with this Email already exists.';
+                        errorSpan.textContent = 'Register with another email or contact the admin.';
                         emailWrap.appendChild(errorSpan);
                         emailInput.focus();
                     } else {

@@ -36,10 +36,10 @@ class RegisterView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        upi_id = getattr(settings, 'UPI_ID', 'riyamathw52@okicici')
-        upi_name = getattr(settings, 'UPI_NAME', 'Riya Mathew')
+        upi_id = getattr(settings, 'UPI_ID', 'smohammedshafeeqhameed@oksbi')
+        upi_name = getattr(settings, 'UPI_NAME', 's mohammed shafeeq hameed')
         # Build the UPI payment URI
-        upi_uri = f"upi://pay?pa={upi_id}&pn={upi_name}&am=100&cu=INR&tn=Registration Fee&mc=0000"
+        upi_uri = f"upi://pay?pa={upi_id}&pn={upi_name}&am=3000&cu=INR&tn=Registration Fee&mc=0000"
         # URL encode the entire UPI URI for the QR code generation service
         encoded_upi_uri = urllib.parse.quote(upi_uri)
         context['upi_id'] = upi_id
@@ -198,6 +198,38 @@ class AdminEmployeeListView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
         context['departments'] = DEPARTMENT_CHOICES
         context['total_count'] = queryset.count()
         return context
+
+class AdminRejectedRegistrationsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'interns/rejected_registrations.html'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        queryset = Intern.objects.filter(status='rejected', is_staff=False).order_by('-date_joined')
+
+        # Search functionality
+        search_query = self.request.GET.get('q', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(full_name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(transaction_id__icontains=search_query)
+            )
+
+        # Pagination
+        paginator = Paginator(queryset, 10)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context['rejected_interns'] = page_obj
+        context['page_obj'] = page_obj
+        context['search_query'] = search_query
+        context['total_count'] = queryset.count()
+        return context
+
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'interns/profile.html'
