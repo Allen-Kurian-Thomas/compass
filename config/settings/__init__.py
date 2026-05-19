@@ -137,3 +137,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # UPI Payment Settings
 UPI_ID = os.environ.get('UPI_ID')
 UPI_NAME = os.environ.get('UPI_NAME')
+
+# Cloudinary Settings
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.getenv('CLOUDINARY_API_KEY'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET')
+)
