@@ -27,7 +27,11 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-for-dev-only'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# Automatically include Railway's public domain if available (production)
+_railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+if _railway_domain:
+    ALLOWED_HOSTS.append(_railway_domain)
 
 
 # Application definition
