@@ -11,6 +11,7 @@ urlpatterns = [
     path('admin-approval/', views.AdminEmployeeApprovalView.as_view(), name='employee_approval'),
     path('admin-employees/', views.AdminEmployeeListView.as_view(), name='employee_list'),
     path('admin-projects/', views.AdminProjectListView.as_view(), name='project_list'),
+    path('admin-rejected/', views.AdminRejectedRegistrationsView.as_view(), name='rejected_registrations'),
     path('admin-action/<int:pk>/<str:action>/', views.AdminEmployeeActionView.as_view(), name='admin_action'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/update/', views.UpdateProfileView.as_view(), name='update_profile'),

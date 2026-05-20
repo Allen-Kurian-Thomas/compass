@@ -38,14 +38,15 @@
         <div class="portal-user-bottom">
             <div class="portal-user-avatar">
                 {% if request.user.profile_photo %}
-                    <img src="{{ request.user.profile_photo.url }}" alt="Avatar">
+                <img src="{{ request.user.profile_photo.url }}" alt="Avatar">
                 {% else %}
-                    <img src="https://ui-avatars.com/api/?name=Jane+Doe&background=1e293b&color=fff" alt="Avatar">
+                <img src="https://ui-avatars.com/api/?name=Jane+Doe&background=1e293b&color=fff" alt="Avatar">
                 {% endif %}
             </div>
             <div class="portal-user-info">
-                <span class="portal-user-name">{{ request.user.first_name|default:"Jane" }} {{ request.user.last_name|default:"Doe" }}</span>
-                <span class="portal-user-role">{{ request.user.designation|default:"Senior Analyst" }}</span>
+                <span class="portal-user-name">{{ request.user.first_name|default:"" }}
+                    {{request.user.last_name|default:""}}</span>
+                <span class="portal-user-role">{{ request.user.designation|default:"Intern" }}</span>
             </div>
         </div>
     </aside>
@@ -54,28 +55,39 @@
     <main class="portal-main">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            <div class="update-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="update-header"
+                style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <h2 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Update Profile</h2>
-                    <p style="font-size: 13px; color: #64748b; margin: 0;">Ensure your institutional records are accurate and up to date.</p>
+                    <h2 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Update Profile
+                    </h2>
+                    <p style="font-size: 13px; color: #64748b; margin: 0;">Ensure your institutional records are
+                        accurate and up to date.</p>
                 </div>
                 <div class="update-actions" style="display: flex; gap: 12px;">
-                    <a href="{% url 'profile' %}" class="portal-btn portal-btn-outline" style="width: auto; padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600;">Cancel</a>
-                    <button type="submit" class="portal-btn" style="width: auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background-color: #325c35; color: white; border-radius: 4px; font-size: 13px; font-weight: 600;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Save Changes
+                    <a href="{% url 'profile' %}" class="portal-btn portal-btn-outline"
+                        style="width: auto; padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600;">Cancel</a>
+                    <button type="submit" class="portal-btn"
+                        style="width: auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background-color: #325c35; color: white; border-radius: 4px; font-size: 13px; font-weight: 600;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg> Save Changes
                     </button>
                 </div>
             </div>
 
             {% if form.errors %}
-                <div style="background-color: #fef2f2; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 24px;">
-                    Please correct the errors below.
-                    {{ form.non_field_errors }}
-                </div>
+            <div
+                style="background-color: #fef2f2; color: #dc2626; padding: 12px; border-radius: 6px; margin-bottom: 24px;">
+                Please correct the errors below.
+                {{ form.non_field_errors }}
+            </div>
             {% endif %}
 
             <div class="profile-2-col-layout">
-                
+
                 <!-- Left Column -->
                 <div class="profile-column">
                     <!-- Personal Information -->
@@ -176,7 +188,9 @@
                                 {{ form.mother_name }}
                             </div>
                         </div>
-                        <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin: 16px 0 8px 0;">Emergency Contact</label>
+                        <label
+                            style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin: 16px 0 8px 0;">Emergency
+                            Contact</label>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Name</label>
@@ -198,24 +212,29 @@
                         <div class="info-card-header">
                             <span class="nav-icon">📄</span> Photo
                         </div>
-                        <div class="upload-box" style="border:1px dashed #cbd5e1; border-radius:6px; padding:24px; text-align:center; background-color:#f8fafc; margin-bottom:12px;">
+                        <div class="upload-box"
+                            style="border:1px dashed #cbd5e1; border-radius:6px; padding:24px; text-align:center; background-color:#f8fafc; margin-bottom:12px;">
                             <div class="upload-icon" style="font-size:20px; color:#64748b; margin-bottom:8px;">🖼️</div>
-                            <div class="upload-text" style="font-size:12px; font-weight:600; color:#0f172a; margin-bottom:4px;">Profile Photo</div>
+                            <div class="upload-text"
+                                style="font-size:12px; font-weight:600; color:#0f172a; margin-bottom:4px;">Profile Photo
+                            </div>
                             {{ form.profile_photo }}
                         </div>
                         {% if request.user.profile_photo %}
-                            <div class="file-item" style="display:flex; justify-content:space-between; align-items:center; background-color:#f1f5f9; padding:8px 12px; border-radius:4px; font-size:12px;">
-                                <div class="file-item-name" style="display:flex; align-items:center; gap:8px;">
-                                    <span style="color:#325c35;">✅</span> Current Photo: {{ request.user.profile_photo.name }}
-                                </div>
+                        <div class="file-item"
+                            style="display:flex; justify-content:space-between; align-items:center; background-color:#f1f5f9; padding:8px 12px; border-radius:4px; font-size:12px;">
+                            <div class="file-item-name" style="display:flex; align-items:center; gap:8px;">
+                                <span style="color:#325c35;">✅</span> Current Photo: {{ request.user.profile_photo.name
+                                }}
                             </div>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
 
                 <!-- Right Column -->
                 <div class="profile-column">
-                    
+
                     <!-- Professional -->
                     <div class="portal-card">
                         <div class="info-card-header">
@@ -290,13 +309,15 @@
                         <div class="info-card-header">
                             <span class="nav-icon">‹›</span> Technical Skills
                         </div>
-                        <div id="skills-container" style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
+                        <div id="skills-container"
+                            style="margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px;">
                             <!-- Tags will be rendered here -->
                         </div>
                         <div style="display:flex; gap:8px;">
                             {{ form.technical_skills }}
                         </div>
-                        <p style="font-size: 11px; color: #64748b; margin-top: 8px;">Enter skills separated by commas.</p>
+                        <p style="font-size: 11px; color: #64748b; margin-top: 8px;">Enter skills separated by commas.
+                        </p>
                     </div>
 
                     <!-- Documentation -->
@@ -304,17 +325,22 @@
                         <div class="info-card-header">
                             <span class="nav-icon">📄</span> Documentation
                         </div>
-                        <div class="upload-box" style="border:1px dashed #cbd5e1; border-radius:6px; padding:24px; text-align:center; background-color:#f8fafc; margin-bottom:12px;">
+                        <div class="upload-box"
+                            style="border:1px dashed #cbd5e1; border-radius:6px; padding:24px; text-align:center; background-color:#f8fafc; margin-bottom:12px;">
                             <div class="upload-icon" style="font-size:20px; color:#64748b; margin-bottom:8px;">📄</div>
-                            <div class="upload-text" style="font-size:12px; font-weight:600; color:#0f172a; margin-bottom:4px;">Resume</div>
+                            <div class="upload-text"
+                                style="font-size:12px; font-weight:600; color:#0f172a; margin-bottom:4px;">Resume</div>
                             {{ form.resume }}
                         </div>
                         {% if request.user.resume %}
-                            <div class="file-item" style="display:flex; justify-content:space-between; align-items:center; background-color:#f1f5f9; padding:8px 12px; border-radius:4px; font-size:12px;">
-                                <div class="file-item-name" style="display:flex; align-items:center; gap:8px;">
-                                    <span style="color:#325c35;">✅</span> Current Resume: <a href="{{ request.user.resume.url }}" target="_blank">{{ request.user.resume.name }}</a>
-                                </div>
+                        <div class="file-item"
+                            style="display:flex; justify-content:space-between; align-items:center; background-color:#f1f5f9; padding:8px 12px; border-radius:4px; font-size:12px;">
+                            <div class="file-item-name" style="display:flex; align-items:center; gap:8px;">
+                                <span style="color:#325c35;">✅</span> Current Resume: <a
+                                    href="{{ request.user.resume.url }}" target="_blank">{{ request.user.resume.name
+                                    }}</a>
                             </div>
+                        </div>
                         {% endif %}
                     </div>
 
@@ -325,33 +351,33 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const skillsInput = document.getElementById('skills-input');
-    const skillsContainer = document.getElementById('skills-container');
+    document.addEventListener('DOMContentLoaded', function () {
+        const skillsInput = document.getElementById('skills-input');
+        const skillsContainer = document.getElementById('skills-container');
 
-    function renderTags() {
-        skillsContainer.innerHTML = '';
-        const skills = skillsInput.value.split(',').map(s => s.trim()).filter(s => s !== '');
-        skills.forEach((skill, index) => {
-            const tag = document.createElement('span');
-            tag.className = 'skill-pill blue';
-            tag.style.display = 'inline-flex';
-            tag.style.alignItems = 'center';
-            tag.style.gap = '4px';
-            tag.innerHTML = `${skill} <span style="cursor:pointer; font-weight:bold;" onclick="removeTag(${index})">×</span>`;
-            skillsContainer.appendChild(tag);
-        });
-    }
+        function renderTags() {
+            skillsContainer.innerHTML = '';
+            const skills = skillsInput.value.split(',').map(s => s.trim()).filter(s => s !== '');
+            skills.forEach((skill, index) => {
+                const tag = document.createElement('span');
+                tag.className = 'skill-pill blue';
+                tag.style.display = 'inline-flex';
+                tag.style.alignItems = 'center';
+                tag.style.gap = '4px';
+                tag.innerHTML = `${skill} <span style="cursor:pointer; font-weight:bold;" onclick="removeTag(${index})">×</span>`;
+                skillsContainer.appendChild(tag);
+            });
+        }
 
-    window.removeTag = function(index) {
-        let skills = skillsInput.value.split(',').map(s => s.trim()).filter(s => s !== '');
-        skills.splice(index, 1);
-        skillsInput.value = skills.join(', ');
-        renderTags();
-    };
+        window.removeTag = function (index) {
+            let skills = skillsInput.value.split(',').map(s => s.trim()).filter(s => s !== '');
+            skills.splice(index, 1);
+            skillsInput.value = skills.join(', ');
+            renderTags();
+        };
 
-    skillsInput.addEventListener('input', renderTags);
-    renderTags(); // Initial render
-});
+        skillsInput.addEventListener('input', renderTags);
+        renderTags(); // Initial render
+    });
 </script>
 {% endblock %}

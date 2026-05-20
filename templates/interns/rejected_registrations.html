@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Employee Approval – Registration System{% endblock %}
+{% block title %}Rejected Registrations – Registration System{% endblock %}
 {% block body_class %}admin-dashboard-page{% endblock %}
 
 {% block extra_head %}
@@ -10,15 +10,15 @@
         --admin-sidebar-active: #487244;
         --admin-sidebar-text: #b0b8c4;
         --admin-sidebar-text-active: #ffffff;
-        
+
         --admin-bg: #fafafa;
         --admin-card-bg: #ffffff;
         --admin-border: #e6e9ef;
         --admin-text-main: #111827;
         --admin-text-muted: #6b7280;
-        
+
         --admin-primary: #111827;
-        --admin-success: #2e5939; /* Dark green matching mockup */
+        --admin-success: #2e5939;
         --admin-danger: #ef4444;
         --admin-green-bg: #f0fdf4;
     }
@@ -207,23 +207,18 @@
         margin: 0;
     }
 
-    .admin-btn-filter {
-        display: flex;
+    /* Rejected badge */
+    .rejected-count-badge {
+        display: inline-flex;
         align-items: center;
-        gap: 8px;
-        background-color: #ffffff;
-        border: 1px solid #d1d5db;
-        color: #374151;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 14px;
+        gap: 6px;
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
         font-weight: 600;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .admin-btn-filter:hover {
-        background-color: #f3f4f6;
     }
 
     /* Table Styles */
@@ -342,45 +337,18 @@
         font-size: 18px;
     }
 
-    .admin-actions-cell {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }
-
-    .admin-btn-action {
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s;
+    /* Status badge */
+    .status-rejected-badge {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-    }
-
-    .admin-btn-approve {
-        background-color: #2e5939; /* Match mockup exactly */
-        color: white;
-        border-radius: 6px;
-        padding: 8px 16px;
-        font-size: 14px;
-        font-weight: 600;
-        gap: 6px;
-    }
-
-    .admin-btn-approve:hover {
-        background-color: #21422a;
-    }
-
-    .admin-btn-reject {
-        background-color: transparent;
-        color: #ef4444;
-        font-size: 18px;
-        padding: 4px;
-        border-radius: 4px;
-    }
-
-    .admin-btn-reject:hover {
+        gap: 5px;
         background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
     }
 
     .empty-state-list {
@@ -388,6 +356,13 @@
         text-align: center;
         color: var(--admin-text-muted);
         font-size: 15px;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        display: block;
+        opacity: 0.4;
     }
 
     /* Pagination */
@@ -487,26 +462,25 @@
         max-height: 70vh;
         object-fit: contain;
     }
-
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="admin-layout">
-    
+
     <!-- Sidebar -->
     <aside class="admin-sidebar">
         <div class="admin-sidebar-header">
             <h1 class="admin-brand">Admin<br>Dashboard</h1>
             <div class="admin-subbrand">Management Portal</div>
         </div>
-        
+
         <nav class="admin-nav">
             <a href="{% url 'admin_dashboard' %}" class="admin-nav-item">
                 <span class="admin-nav-icon">🛡️</span>
                 Home
             </a>
-            <a href="{% url 'employee_approval' %}" class="admin-nav-item active">
+            <a href="{% url 'employee_approval' %}" class="admin-nav-item">
                 <span class="admin-nav-icon">☑️</span>
                 Employee Approval
             </a>
@@ -518,7 +492,7 @@
                 <span class="admin-nav-icon">🗂️</span>
                 Project List
             </a>
-            <a href="{% url 'rejected_registrations' %}" class="admin-nav-item">
+            <a href="{% url 'rejected_registrations' %}" class="admin-nav-item active">
                 <span class="admin-nav-icon">🚫</span>
                 Rejected Registrations
             </a>
@@ -534,13 +508,12 @@
     <!-- Main Content -->
     <main class="admin-main">
         <header class="admin-topbar">
-            <button class="admin-mobile-menu-btn" onclick="toggleAdminSidebar()">☰</button>
-            <h2 class="admin-topbar-title">Pending Approvals</h2>
-            
+            <h2 class="admin-topbar-title">Rejected Registrations</h2>
+
             <div class="admin-topbar-actions">
-                <form class="admin-search-form" method="GET" action="{% url 'employee_approval' %}">
+                <form class="admin-search-form" method="GET" action="{% url 'rejected_registrations' %}">
                     <span class="admin-search-icon">🔍</span>
-                    <input type="text" name="q" class="admin-search-input" placeholder="Search requests..." value="{{ search_query }}">
+                    <input type="text" name="q" class="admin-search-input" placeholder="Search by name, email, UTR..." value="{{ search_query }}">
                 </form>
                 <a href="#" class="admin-bell-icon">🔔</a>
             </div>
@@ -549,28 +522,28 @@
         <div class="admin-content">
             <div class="admin-page-header-row">
                 <div>
-                    <h2 class="admin-page-title">Review Registrations</h2>
-                    <p class="admin-page-subtitle">Manage and verify new employee onboarding requests.</p>
+                    <h2 class="admin-page-title">Rejected Registrations</h2>
+                    <p class="admin-page-subtitle">Candidates whose registration requests have been declined.</p>
                 </div>
-                <button class="admin-btn-filter">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                    Filter
-                </button>
+                <div class="rejected-count-badge">
+                    <span>🚫</span>
+                    {{ total_count }} Rejected
+                </div>
             </div>
 
             <div class="admin-table-container">
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>EMPLOYEE INFO</th>
-                            <th>CONTACT</th>
+                            <th>CANDIDATE INFO</th>
+                            <th>EMAIL</th>
                             <th>TRANSACTION ID</th>
-                            <th>SCREENSHOT</th>
-                            <th>ACTIONS</th>
+                            <th>PAYMENT SCREENSHOT</th>
+                            <th>STATUS</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for intern in pending_interns %}
+                        {% for intern in rejected_interns %}
                         <tr>
                             <td>
                                 <div class="employee-info-col">
@@ -607,33 +580,25 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <div class="admin-actions-cell">
-                                    <form method="post" action="{% url 'admin_action' intern.pk 'reject' %}" style="display:inline; margin: 0;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="admin-btn-action admin-btn-reject" title="Reject">✕</button>
-                                    </form>
-                                    <form method="post" action="{% url 'admin_action' intern.pk 'approve' %}" style="display:inline; margin: 0;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="admin-btn-action admin-btn-approve">
-                                            ✓ Approve
-                                        </button>
-                                    </form>
-                                </div>
+                                <span class="status-rejected-badge">✕ Rejected</span>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
                             <td colspan="5">
-                                <div class="empty-state-list">No pending employee approvals at the moment.</div>
+                                <div class="empty-state-list">
+                                    <span class="empty-state-icon">✅</span>
+                                    No rejected registrations found.
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-                
+
                 <div class="admin-pagination-container">
                     <div class="pagination-info">
-                        Showing {{ page_obj.start_index|default:0 }} to {{ page_obj.end_index|default:0 }} of {{ total_count }} requests
+                        Showing {{ page_obj.start_index|default:0 }} to {{ page_obj.end_index|default:0 }} of {{ total_count }} rejected candidates
                     </div>
                     <div class="pagination-controls">
                         {% if page_obj.has_previous %}
@@ -641,7 +606,7 @@
                         {% else %}
                             <span class="pagination-btn disabled">‹</span>
                         {% endif %}
-                        
+
                         {% if page_obj.has_next %}
                             <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}" class="pagination-btn">›</a>
                         {% else %}
@@ -654,7 +619,7 @@
         </div>
     </main>
 
-    <!-- Modal -->
+    <!-- Screenshot Modal -->
     <div class="screenshot-modal" id="screenshotModal">
         <div class="screenshot-content">
             <div class="screenshot-header">
@@ -674,10 +639,10 @@
 <script>
     function openScreenshot(url, name) {
         document.getElementById('screenshotImg').src = url;
-        document.getElementById('screenshotTitle').textContent = 'Screenshot - ' + name;
+        document.getElementById('screenshotTitle').textContent = 'Screenshot – ' + name;
         document.getElementById('screenshotModal').classList.add('active');
     }
-    
+
     function closeScreenshot() {
         document.getElementById('screenshotModal').classList.remove('active');
         document.getElementById('screenshotImg').src = '';
@@ -689,6 +654,5 @@
             closeScreenshot();
         }
     });
-
 </script>
 {% endblock %}
