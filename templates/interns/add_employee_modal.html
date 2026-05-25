@@ -1,0 +1,160 @@
+<!-- Add New Employee Modal -->
+<div class="add-employee-modal" id="addEmployeeModal" style="display: none;">
+    <div class="add-employee-backdrop" onclick="closeAddEmployeeModal()"></div>
+    <div class="add-employee-content">
+        <div class="add-employee-header">
+            <h3 class="add-employee-title">Add New Employee</h3>
+            <button type="button" class="add-employee-close" onclick="closeAddEmployeeModal()">×</button>
+        </div>
+        <form id="addEmployeeForm" method="POST" novalidate>
+            {% csrf_token %}
+            <div class="add-employee-body">
+                <!-- Non-field error banner -->
+                <div class="form-error-box" id="addEmployeeGlobalError" style="display: none; margin-bottom: 16px;"></div>
+
+                <div class="add-employee-field">
+                    <label for="id_full_name">Full Name</label>
+                    <input type="text" id="id_full_name" name="full_name" placeholder="e.g. John Doe" required autocomplete="name">
+                    <span class="field-error" id="error_full_name"></span>
+                </div>
+
+                <div class="add-employee-field">
+                    <label for="id_email">Official Email</label>
+                    <input type="email" id="id_email" name="email" placeholder="username@company.com" required autocomplete="email">
+                    <span class="field-error" id="error_email"></span>
+                </div>
+
+                <div class="add-employee-field">
+                    <label for="id_password">Password</label>
+                    <input type="password" id="id_password" name="password" placeholder="••••••••" required autocomplete="new-password">
+                    <span class="field-help">Min 8 chars; uppercase, number, and special char required.</span>
+                    <span class="field-error" id="error_password"></span>
+                </div>
+
+                <div class="add-employee-field">
+                    <label for="id_date_of_joining">Date of Joining</label>
+                    <input type="date" id="id_date_of_joining" name="date_of_joining" required>
+                    <span class="field-error" id="error_date_of_joining"></span>
+                </div>
+
+                <div class="add-employee-field">
+                    <label for="id_department">Department/Stream</label>
+                    <div class="select-wrapper">
+                        <select id="id_department" name="department" required>
+                            <option value="" disabled selected>Select Department</option>
+                            {% for code, name in departments %}
+                                <option value="{{ code }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <span class="field-error" id="error_department"></span>
+                </div>
+            </div>
+            <div class="add-employee-footer">
+                <button type="button" class="btn-modal-cancel" onclick="closeAddEmployeeModal()">Cancel</button>
+                <button type="submit" class="btn-modal-submit">Add Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAddEmployeeModal() {
+        // Reset form
+        document.getElementById('addEmployeeForm').reset();
+        
+        // Clear all validation errors
+        document.querySelectorAll('.add-employee-field .field-error').forEach(el => el.textContent = '');
+        const globalError = document.getElementById('addEmployeeGlobalError');
+        globalError.textContent = '';
+        globalError.style.display = 'none';
+        
+        // Default Joining Date to today in user's timezone
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1; // Months start at 0
+        let dd = today.getDate();
+
+        if (mm < 10) mm = '0' + mm;
+        if (dd < 10) dd = '0' + dd;
+
+        const formattedToday = yyyy + '-' + mm + '-' + dd;
+        document.getElementById('id_date_of_joining').value = formattedToday;
+
+        // Show modal
+        document.getElementById('addEmployeeModal').style.display = 'flex';
+    }
+
+    function closeAddEmployeeModal() {
+        document.getElementById('addEmployeeModal').style.display = 'none';
+    }
+
+    // Close modal on Escape key press
+    window.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeAddEmployeeModal();
+        }
+    });
+
+    document.getElementById('addEmployeeForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Clear previous errors
+        document.querySelectorAll('.add-employee-field .field-error').forEach(el => el.textContent = '');
+        const globalError = document.getElementById('addEmployeeGlobalError');
+        globalError.textContent = '';
+        globalError.style.display = 'none';
+
+        const submitBtn = this.querySelector('.btn-modal-submit');
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Adding...';
+
+        const formData = new FormData(this);
+
+        fetch("{% url 'admin_add_employee' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            return response.json().then(data => {
+                if (!response.ok) {
+                    throw { status: response.status, data: data };
+                }
+                return data;
+            });
+        })
+        .then(data => {
+            if (data.success) {
+                // Success! Close modal and refresh page to show new employee
+                closeAddEmployeeModal();
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+
+            if (error.data && error.data.errors) {
+                const errors = error.data.errors;
+                for (const [field, message] of Object.entries(errors)) {
+                    if (field === 'non_field_errors') {
+                        globalError.textContent = message;
+                        globalError.style.display = 'block';
+                    } else {
+                        const errorSpan = document.getElementById(`error_${field}`);
+                        if (errorSpan) {
+                            errorSpan.textContent = message;
+                        }
+                    }
+                }
+            } else {
+                globalError.textContent = 'An unexpected error occurred. Please try again.';
+                globalError.style.display = 'block';
+            }
+        });
+    });
+</script>

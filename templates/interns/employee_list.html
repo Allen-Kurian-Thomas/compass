@@ -518,7 +518,7 @@
                     <h2 class="admin-page-title">Employee Directory</h2>
                     <p class="admin-page-subtitle">Manage and view all registered personnel.</p>
                 </div>
-                <a href="#" class="btn-add-employee">
+                <a href="#" class="btn-add-employee" onclick="openAddEmployeeModal(); return false;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
                     Add New Employee
                 </a>
@@ -551,11 +551,6 @@
                         <option value="inactive" {% if status_query == 'inactive' %}selected{% endif %}>Inactive</option>
                     </select>
                 </div>
-                
-                <button type="button" class="btn-more-filters">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                    More Filters
-                </button>
             </form>
 
             <div class="admin-table-container">
@@ -663,4 +658,5 @@
     </main>
 
 </div>
+{% include 'interns/add_employee_modal.html' %}
 {% endblock %}

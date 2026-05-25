@@ -194,13 +194,23 @@ class Intern(AbstractBaseUser, PermissionsMixin):
     @property
     def payment_screenshot_url(self):
         if self.payment_screenshot:
+            import cloudinary
             import cloudinary.utils
-            url, options = cloudinary.utils.cloudinary_url(
-                self.payment_screenshot.public_id,
-                sign_url=True,
-                type='private'
-            )
-            return url
+            try:
+                conf = cloudinary.config()
+                if conf.cloud_name and conf.api_key and conf.api_secret:
+                    url, options = cloudinary.utils.cloudinary_url(
+                        self.payment_screenshot.public_id,
+                        sign_url=True,
+                        type='private'
+                    )
+                    return url
+            except Exception:
+                pass
+            try:
+                return self.payment_screenshot.url
+            except Exception:
+                return None
         return None
 
 
@@ -270,11 +280,21 @@ class RejectedCandidate(models.Model):
     @property
     def payment_screenshot_url(self):
         if self.payment_screenshot:
+            import cloudinary
             import cloudinary.utils
-            url, options = cloudinary.utils.cloudinary_url(
-                self.payment_screenshot.public_id,
-                sign_url=True,
-                type='private'
-            )
-            return url
+            try:
+                conf = cloudinary.config()
+                if conf.cloud_name and conf.api_key and conf.api_secret:
+                    url, options = cloudinary.utils.cloudinary_url(
+                        self.payment_screenshot.public_id,
+                        sign_url=True,
+                        type='private'
+                    )
+                    return url
+            except Exception:
+                pass
+            try:
+                return self.payment_screenshot.url
+            except Exception:
+                return None
         return None

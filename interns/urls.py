@@ -10,6 +10,7 @@ urlpatterns = [
     path('admin-dashboard/', views.AdminDashboardView.as_view(), name='admin_dashboard'),
     path('admin-approval/', views.AdminEmployeeApprovalView.as_view(), name='employee_approval'),
     path('admin-employees/', views.AdminEmployeeListView.as_view(), name='employee_list'),
+    path('admin-employees/add/', views.AdminAddEmployeeView.as_view(), name='admin_add_employee'),
     path('admin-projects/', views.AdminProjectListView.as_view(), name='project_list'),
     path('admin-rejected/', views.AdminRejectedRegistrationsView.as_view(), name='rejected_registrations'),
     path('admin-action/<int:pk>/<str:action>/', views.AdminEmployeeActionView.as_view(), name='admin_action'),

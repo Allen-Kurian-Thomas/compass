@@ -552,10 +552,6 @@
                     <h2 class="admin-page-title">Review Registrations</h2>
                     <p class="admin-page-subtitle">Manage and verify new employee onboarding requests.</p>
                 </div>
-                <button class="admin-btn-filter">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                    Filter
-                </button>
             </div>
 
             <div class="admin-table-container">
@@ -598,7 +594,7 @@
                                 </div>
                             </td>
                             <td>
-                                {% if intern.payment_screenshot %}
+                                {% if intern.payment_screenshot_url %}
                                     <img src="{{ intern.payment_screenshot_url }}" class="screenshot-thumb" alt="Screenshot" onclick="openScreenshot('{{ intern.payment_screenshot_url }}', '{{ intern.full_name|escapejs }}')">
                                 {% else %}
                                     <div class="screenshot-placeholder">

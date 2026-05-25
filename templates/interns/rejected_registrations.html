@@ -571,7 +571,7 @@
                                 </div>
                             </td>
                             <td>
-                                {% if intern.payment_screenshot %}
+                                {% if intern.payment_screenshot_url %}
                                     <img src="{{ intern.payment_screenshot_url }}" class="screenshot-thumb" alt="Screenshot" onclick="openScreenshot('{{ intern.payment_screenshot_url }}', '{{ intern.full_name|escapejs }}')">
                                 {% else %}
                                     <div class="screenshot-placeholder">

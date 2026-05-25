@@ -104,6 +104,7 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['active_projects'] = 45
         context['total_employees'] = Intern.objects.filter(status='approved', is_staff=False).count()
         context['recent_requests'] = Intern.objects.filter(status='pending').order_by('-date_joined')[:5]
+        context['departments'] = DEPARTMENT_CHOICES
         return context
 
 
@@ -206,6 +207,75 @@ class AdminEmployeeListView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
         context['departments'] = DEPARTMENT_CHOICES
         context['total_count'] = queryset.count()
         return context
+
+
+class AdminAddEmployeeView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        import re
+        from django.utils.dateparse import parse_date
+
+        full_name = request.POST.get('full_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        date_of_joining_str = request.POST.get('date_of_joining', '').strip()
+        department = request.POST.get('department', '').strip()
+
+        errors = {}
+
+        if not full_name:
+            errors['full_name'] = "Full name is required."
+        elif len(full_name) > 150:
+            errors['full_name'] = "Full name cannot exceed 150 characters."
+
+        if not email:
+            errors['email'] = "Email is required."
+        elif Intern.objects.filter(email__iexact=email).exists():
+            errors['email'] = "An employee with this email already exists."
+
+        if not password:
+            errors['password'] = "Password is required."
+        elif len(password) < 8:
+            errors['password'] = "Password must be at least 8 characters long."
+        else:
+            if not re.search(r'[A-Z]', password):
+                errors['password'] = "Password must contain at least one uppercase letter."
+            elif not re.search(r'[0-9]', password):
+                errors['password'] = "Password must contain at least one number."
+            elif not re.search(r'[^a-zA-Z0-9]', password):
+                errors['password'] = "Password must contain at least one special character."
+
+        date_of_joining = None
+        if not date_of_joining_str:
+            errors['date_of_joining'] = "Date of joining is required."
+        else:
+            date_of_joining = parse_date(date_of_joining_str)
+            if not date_of_joining:
+                errors['date_of_joining'] = "Invalid date format. Use YYYY-MM-DD."
+
+        valid_departments = [choice[0] for choice in DEPARTMENT_CHOICES]
+        if not department:
+            errors['department'] = "Department is required."
+        elif department not in valid_departments:
+            errors['department'] = "Selected department is invalid."
+
+        if errors:
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+        try:
+            user = Intern.objects.create_user(
+                email=email,
+                full_name=full_name,
+                password=password,
+                department=department,
+                date_of_joining=date_of_joining,
+                status='approved'
+            )
+            return JsonResponse({'success': True, 'message': 'Employee added successfully!'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'errors': {'non_field_errors': str(e)}}, status=500)
 
 class AdminRejectedRegistrationsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'interns/rejected_registrations.html'

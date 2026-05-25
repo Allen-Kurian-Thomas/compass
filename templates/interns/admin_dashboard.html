@@ -443,7 +443,7 @@
                     <div class="admin-quick-actions">
                         <h3 class="admin-qa-title">QUICK ACTIONS</h3>
                         <div class="admin-qa-list">
-                            <a href="#" class="admin-qa-btn">
+                            <a href="#" class="admin-qa-btn" onclick="openAddEmployeeModal(); return false;">
                                 <span class="admin-qa-icon">👤+</span>
                                 Add New Employee
                             </a>
@@ -463,4 +463,5 @@
     </main>
 
 </div>
+{% include 'interns/add_employee_modal.html' %}
 {% endblock %}
