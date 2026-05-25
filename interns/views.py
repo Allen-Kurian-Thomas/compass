@@ -17,7 +17,7 @@ from .forms import (
     FinancialInfoForm, StatutoryInfoForm, FamilyInfoForm,
     EducationForm, CertificationForm, UpdateProfileForm,
 )
-from .models import Intern, Education, Certification, DEPARTMENT_CHOICES, Project
+from .models import Intern, Education, Certification, DEPARTMENT_CHOICES, Project, RejectedCandidate
 from django.http import JsonResponse
 
 class CheckEmailView(View):
@@ -147,9 +147,17 @@ class AdminEmployeeActionView(LoginRequiredMixin, UserPassesTestMixin, View):
         intern = get_object_or_404(Intern, pk=pk)
         if action == 'approve':
             intern.status = 'approved'
+            intern.save()
         elif action == 'reject':
-            intern.status = 'rejected'
-        intern.save()
+            RejectedCandidate.objects.create(
+                full_name=intern.full_name,
+                email=intern.email,
+                department=intern.department,
+                transaction_id=intern.transaction_id,
+                payment_screenshot=intern.payment_screenshot,
+                date_joined=intern.date_joined
+            )
+            intern.delete()
         return redirect('employee_approval')
 
 
@@ -208,7 +216,7 @@ class AdminRejectedRegistrationsView(LoginRequiredMixin, UserPassesTestMixin, Te
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        queryset = Intern.objects.filter(status='rejected', is_staff=False).order_by('-date_joined')
+        queryset = RejectedCandidate.objects.all().order_by('-date_rejected')
 
         # Search functionality
         search_query = self.request.GET.get('q', '')

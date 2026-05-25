@@ -248,3 +248,33 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class RejectedCandidate(models.Model):
+    full_name = models.CharField(max_length=150)
+    email = models.EmailField()
+    department = models.CharField(max_length=50, choices=DEPARTMENT_CHOICES, blank=True)
+    transaction_id = models.CharField(max_length=100, blank=True)
+    payment_screenshot = CloudinaryField('payment_screenshot', type='private', blank=True, null=True)
+    date_joined = models.DateTimeField()
+    date_rejected = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Rejected Candidate'
+        verbose_name_plural = 'Rejected Candidates'
+        ordering = ['-date_rejected']
+
+    def __str__(self):
+        return f"{self.full_name} ({self.email})"
+
+    @property
+    def payment_screenshot_url(self):
+        if self.payment_screenshot:
+            import cloudinary.utils
+            url, options = cloudinary.utils.cloudinary_url(
+                self.payment_screenshot.public_id,
+                sign_url=True,
+                type='private'
+            )
+            return url
+        return None
