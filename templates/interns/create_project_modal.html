@@ -28,17 +28,34 @@
                     <span class="field-error" id="error_project_type"></span>
                 </div>
 
-                <div class="add-employee-field">
-                    <label for="id_allocated_interns">Allocate Interns</label>
-                    <div class="select-wrapper">
-                        <select id="id_allocated_interns" name="allocated_interns" multiple style="height: 100px;">
-                            {% for intern in available_interns %}
-                                <option value="{{ intern.id }}">{{ intern.full_name }} ({{ intern.email }})</option>
-                            {% endfor %}
-                        </select>
+                <div class="add-employee-field" style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Allocate Interns</label>
+                    <div style="display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end;">
+                        <div style="flex: 1;" class="select-wrapper">
+                            <select id="id_add_intern_select">
+                                <option value="" disabled selected>Select Intern to Add...</option>
+                                {% for intern in available_interns %}
+                                    <option value="{{ intern.id }}" data-name="{{ intern.full_name }}" data-email="{{ intern.email }}">
+                                        {{ intern.full_name }} ({{ intern.email }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="button" class="btn-modal-cancel" id="btn_modal_add_intern" style="height: 42px; margin: 0; padding: 0 16px; font-size: 14px; border: 1px solid #cbd5e1;">+ Add</button>
                     </div>
-                    <span class="field-help">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</span>
-                    <span class="field-error" id="error_allocated_interns"></span>
+
+                    <table class="admin-table" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; display: none;" id="modal_allocations_table">
+                        <thead>
+                            <tr style="background-color: #f8fafc; font-size: 11px;">
+                                <th style="padding: 8px 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Intern</th>
+                                <th style="padding: 8px 12px; font-weight: 700; color: #64748b; text-transform: uppercase; width: 140px;">Location</th>
+                                <th style="padding: 8px 12px; font-weight: 700; color: #64748b; text-transform: uppercase; width: 90px;">Alloc %</th>
+                                <th style="padding: 8px 12px; width: 40px; text-align: center;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal_allocations_tbody">
+                        </tbody>
+                    </table>
                 </div>
 
                 <div class="add-employee-field">
@@ -76,6 +93,24 @@
         font-size: 14px;
         background-color: #ffffff;
     }
+    /* Style for allocation table inputs to ensure dark text and proper focus on light theme */
+    .admin-table input.form-input {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .admin-table input.form-input:focus {
+        border-color: #487244 !important;
+        box-shadow: 0 0 0 3px rgba(72,114,68,0.12) !important;
+        background-color: #ffffff !important;
+    }
+    /* Specific adjustment for number inputs to keep spinner arrows functional and clickable */
+    .admin-table input[type="number"].form-input {
+        padding-right: 4px !important;
+    }
 </style>
 
 <script>
@@ -85,6 +120,10 @@
         const globalError = document.getElementById('createProjectGlobalError');
         globalError.textContent = '';
         globalError.style.display = 'none';
+        
+        // Clear modal allocations
+        document.getElementById('modal_allocations_tbody').innerHTML = '';
+        document.getElementById('modal_allocations_table').style.display = 'none';
         
         document.getElementById('createProjectModal').style.display = 'flex';
     }
@@ -151,4 +190,81 @@
             }
         });
     });
+    document.getElementById('btn_modal_add_intern').addEventListener('click', function() {
+        const select = document.getElementById('id_add_intern_select');
+        const internId = select.value;
+        if (!internId) return;
+
+        // Check if already exists
+        if (document.getElementById('modal_allocation_row_' + internId)) {
+            alert('This intern is already added.');
+            return;
+        }
+
+        const option = select.options[select.selectedIndex];
+        const name = option.getAttribute('data-name');
+        const email = option.getAttribute('data-email');
+
+        // Show table
+        document.getElementById('modal_allocations_table').style.display = 'table';
+
+        // Add row
+        const tbody = document.getElementById('modal_allocations_tbody');
+        const tr = document.createElement('tr');
+        tr.id = 'modal_allocation_row_' + internId;
+        tr.innerHTML = `
+            <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">
+                <input type="hidden" name="allocated_interns" value="${internId}">
+                <div style="font-weight: 600; color: #334155; font-size: 13px;">${name}</div>
+                <div style="font-size: 11px; color: #64748b;">${email}</div>
+            </td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">
+                <input type="text" name="location_${internId}" value="" placeholder="e.g. Remote" class="form-input" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 12px; width: 100%; color: #0f172a; background-color: #ffffff;">
+            </td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">
+                <input type="number" name="percentage_${internId}" value="100" min="0" max="100" class="form-input percentage-input-field" style="padding: 4px 4px 4px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 12px; width: 90px; color: #0f172a; background-color: #ffffff;">
+            </td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+                <button type="button" onclick="removeModalAllocationRow('${internId}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; padding: 2px;">✕</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+
+        // Bind scroll wheel listener to new element
+        const newPctInput = tr.querySelector('.percentage-input-field');
+        if (newPctInput) {
+            setupPercentageScroll(newPctInput);
+        }
+
+        // Reset select dropdown
+        select.value = '';
+    });
+
+    window.removeModalAllocationRow = function(internId) {
+        const tr = document.getElementById('modal_allocation_row_' + internId);
+        if (tr) tr.remove();
+
+        const tbody = document.getElementById('modal_allocations_tbody');
+        if (tbody.children.length === 0) {
+            document.getElementById('modal_allocations_table').style.display = 'none';
+        }
+    };
+
+    function setupPercentageScroll(input) {
+        input.addEventListener('wheel', function(e) {
+            if (document.activeElement === input) {
+                e.preventDefault();
+                let step = parseInt(input.getAttribute('step')) || 1;
+                let min = parseInt(input.getAttribute('min')) || 0;
+                let max = parseInt(input.getAttribute('max')) || 100;
+                let val = parseInt(input.value) || 0;
+                if (e.deltaY < 0) {
+                    input.value = Math.min(max, val + step);
+                } else {
+                    input.value = Math.max(min, val - step);
+                }
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }, { passive: false });
+    }
 </script>

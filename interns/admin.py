@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Intern, Education, Certification
+from .models import Intern, Education, Certification, Project, ProjectAllocation
 
 
 class EducationInline(admin.TabularInline):
@@ -16,8 +16,8 @@ class CertificationInline(admin.TabularInline):
 @admin.register(Intern)
 class InternAdmin(UserAdmin):
     model = Intern
-    list_display = ('email', 'full_name', 'employee_id', 'department', 'status', 'date_of_joining', 'is_active')
-    list_filter = ('status', 'department', 'is_active', 'is_staff')
+    list_display = ('email', 'full_name', 'role', 'employee_id', 'department', 'status', 'date_of_joining', 'is_active')
+    list_filter = ('role', 'status', 'department', 'is_active', 'is_staff')
     search_fields = ('email', 'full_name', 'employee_id')
     ordering = ('-date_joined',)
     inlines = [EducationInline, CertificationInline]
@@ -30,12 +30,12 @@ class InternAdmin(UserAdmin):
         ('Financial', {'fields': ('bank_name', 'account_number', 'ifsc_code', 'pan_number', 'aadhaar_number')}),
         ('Statutory', {'fields': ('pf_uan', 'pf_account_number', 'passport_number')}),
         ('Family', {'fields': ('father_name', 'mother_name', 'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Permissions', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'full_name', 'department', 'password1', 'password2', 'status'),
+            'fields': ('email', 'full_name', 'department', 'password1', 'password2', 'status', 'role'),
         }),
     )
 
@@ -50,3 +50,17 @@ class EducationAdmin(admin.ModelAdmin):
 class CertificationAdmin(admin.ModelAdmin):
     list_display = ('intern', 'name', 'platform', 'issued_date')
     search_fields = ('intern__email', 'name', 'platform')
+
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'project_type', 'client_department', 'lead', 'status', 'created_at')
+    list_filter = ('project_type', 'status')
+    search_fields = ('name', 'client_department')
+
+
+@admin.register(ProjectAllocation)
+class ProjectAllocationAdmin(admin.ModelAdmin):
+    list_display = ('project', 'intern', 'location', 'allocation_percentage')
+    list_filter = ('project', 'location')
+    search_fields = ('intern__full_name', 'intern__email', 'project__name')

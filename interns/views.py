@@ -69,7 +69,7 @@ class LoginView(auth_views.LoginView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            if request.user.is_staff or request.user.is_superuser:
+            if request.user.is_staff or request.user.is_superuser or request.user.role == 'senior_architect':
                 return redirect('admin_dashboard')
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
@@ -77,7 +77,7 @@ class LoginView(auth_views.LoginView):
     def form_valid(self, form):
         user = form.get_user()
         login(self.request, user)
-        if user.is_staff or user.is_superuser:
+        if user.is_staff or user.is_superuser or user.role == 'senior_architect':
             return redirect('admin_dashboard')
         return redirect('home')
 
@@ -96,7 +96,7 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'interns/admin_dashboard.html'
 
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser
+        return self.request.user.is_staff or self.request.user.is_superuser or self.request.user.role == 'senior_architect'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -105,6 +105,7 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['recent_requests'] = Intern.objects.filter(status='pending').order_by('-date_joined')[:5]
         context['departments'] = DEPARTMENT_CHOICES
         context['available_interns'] = Intern.objects.filter(status='approved', is_staff=False)
+        context['recent_projects'] = Project.objects.all().select_related('lead').order_by('-created_at')[:5]
         return context
 
 
@@ -222,6 +223,7 @@ class AdminAddEmployeeView(LoginRequiredMixin, UserPassesTestMixin, View):
         password = request.POST.get('password', '')
         date_of_joining_str = request.POST.get('date_of_joining', '').strip()
         department = request.POST.get('department', '').strip()
+        role = request.POST.get('role', 'intern').strip()
 
         errors = {}
 
@@ -261,6 +263,10 @@ class AdminAddEmployeeView(LoginRequiredMixin, UserPassesTestMixin, View):
         elif department not in valid_departments:
             errors['department'] = "Selected department is invalid."
 
+        valid_roles = [choice[0] for choice in Intern.ROLE_CHOICES]
+        if role not in valid_roles:
+            errors['role'] = "Selected role is invalid."
+
         if errors:
             return JsonResponse({'success': False, 'errors': errors}, status=400)
 
@@ -271,7 +277,8 @@ class AdminAddEmployeeView(LoginRequiredMixin, UserPassesTestMixin, View):
                 password=password,
                 department=department,
                 date_of_joining=date_of_joining,
-                status='approved'
+                status='approved',
+                role=role
             )
             return JsonResponse({'success': True, 'message': 'Employee added successfully!'})
         except Exception as e:
@@ -465,7 +472,7 @@ class AdminProjectListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
     template_name = 'interns/project_list.html'
 
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser
+        return self.request.user.is_staff or self.request.user.is_superuser or self.request.user.role == 'senior_architect'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -502,7 +509,7 @@ class AdminProjectListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
 
 class AdminAddProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser
+        return self.request.user.is_staff or self.request.user.is_superuser or self.request.user.role == 'senior_architect'
 
     def post(self, request, *args, **kwargs):
         name = request.POST.get('name', '').strip()
@@ -529,8 +536,20 @@ class AdminAddProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
             )
             
             if allocated_intern_ids:
-                interns = Intern.objects.filter(id__in=allocated_intern_ids)
-                project.allocated_interns.set(interns)
+                from .models import ProjectAllocation
+                for intern_id in allocated_intern_ids:
+                    location = request.POST.get(f'location_{intern_id}', '').strip()
+                    percentage_str = request.POST.get(f'percentage_{intern_id}', '100').strip()
+                    try:
+                        percentage = int(percentage_str)
+                    except ValueError:
+                        percentage = 100
+                    ProjectAllocation.objects.create(
+                        project=project,
+                        intern_id=intern_id,
+                        location=location,
+                        allocation_percentage=percentage
+                    )
                 
             return JsonResponse({'success': True, 'message': 'Project created successfully!'})
         except Exception as e:
@@ -542,12 +561,12 @@ class AdminProjectDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView
     context_object_name = 'project'
 
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser
+        return self.request.user.is_staff or self.request.user.is_superuser or self.request.user.role == 'senior_architect'
 
 
 class AdminEditProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser
+        return self.request.user.is_staff or self.request.user.is_superuser or self.request.user.role == 'senior_architect'
 
     def get(self, request, pk, *args, **kwargs):
         project = get_object_or_404(Project, pk=pk)
@@ -595,11 +614,27 @@ class AdminEditProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
 
             project.save()
 
-            if allocated_intern_ids:
-                interns = Intern.objects.filter(id__in=allocated_intern_ids)
-                project.allocated_interns.set(interns)
-            else:
-                project.allocated_interns.clear()
+            from .models import ProjectAllocation
+            # Delete allocations that are no longer selected
+            ProjectAllocation.objects.filter(project=project).exclude(intern_id__in=allocated_intern_ids).delete()
+            
+            # Create or update selected allocations
+            for intern_id in allocated_intern_ids:
+                location = request.POST.get(f'location_{intern_id}', '').strip()
+                percentage_str = request.POST.get(f'percentage_{intern_id}', '100').strip()
+                try:
+                    percentage = int(percentage_str)
+                except ValueError:
+                    percentage = 100
+                
+                ProjectAllocation.objects.update_or_create(
+                    project=project,
+                    intern_id=intern_id,
+                    defaults={
+                        'location': location,
+                        'allocation_percentage': percentage
+                    }
+                )
 
             return JsonResponse({'success': True, 'message': 'Project updated successfully!', 'redirect': '/admin-projects/'})
         except Exception as e:

@@ -89,6 +89,12 @@ class Intern(AbstractBaseUser, PermissionsMixin):
     department = models.CharField(max_length=50, choices=DEPARTMENT_CHOICES, blank=True)
     date_of_joining = models.DateField(default=timezone.now)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    ROLE_CHOICES = [
+        ('intern', 'Intern'),
+        ('senior_architect', 'Senior Architect'),
+        ('admin', 'Admin'),
+    ]
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='intern')
 
     # Django auth fields
     is_staff = models.BooleanField(default=False)
@@ -169,6 +175,8 @@ class Intern(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         if not self.employee_id and self.status == 'approved':
             self.employee_id = generate_employee_id()
+        if self.role == 'admin':
+            self.is_staff = True
         super().save(*args, **kwargs)
 
     @property
@@ -236,6 +244,21 @@ class Certification(models.Model):
         return f"{self.name} - {self.platform}"
 
 
+class ProjectAllocation(models.Model):
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='allocations')
+    intern = models.ForeignKey(Intern, on_delete=models.CASCADE, related_name='allocations')
+    location = models.CharField(max_length=150, blank=True)
+    allocation_percentage = models.PositiveIntegerField(default=100)
+
+    class Meta:
+        unique_together = ('project', 'intern')
+        verbose_name = 'Project Allocation'
+        verbose_name_plural = 'Project Allocations'
+
+    def __str__(self):
+        return f"{self.intern.full_name} - {self.project.name} ({self.allocation_percentage}%)"
+
+
 class Project(models.Model):
     STATUS_CHOICES = [
         ('active', 'Active'),
@@ -251,7 +274,7 @@ class Project(models.Model):
     project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default='internal')
     client_department = models.CharField(max_length=200, blank=True)
     lead = models.ForeignKey(Intern, on_delete=models.SET_NULL, null=True, blank=True, related_name='led_projects')
-    allocated_interns = models.ManyToManyField(Intern, related_name='allocated_projects', blank=True)
+    allocated_interns = models.ManyToManyField(Intern, through='ProjectAllocation', related_name='allocated_projects', blank=True)
     timeline = models.CharField(max_length=100, blank=True)
     budget = models.CharField(max_length=50, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')

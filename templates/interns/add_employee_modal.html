@@ -49,6 +49,18 @@
                     </div>
                     <span class="field-error" id="error_department"></span>
                 </div>
+
+                <div class="add-employee-field">
+                    <label for="id_role">Role</label>
+                    <div class="select-wrapper">
+                        <select id="id_role" name="role" required>
+                            <option value="intern" selected>Intern</option>
+                            <option value="senior_architect">Senior Architect</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <span class="field-error" id="error_role"></span>
+                </div>
             </div>
             <div class="add-employee-footer">
                 <button type="button" class="btn-modal-cancel" onclick="closeAddEmployeeModal()">Cancel</button>

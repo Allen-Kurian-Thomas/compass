@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Edit {{ project.name }} – Admin{% endblock %}
+{% block title %}Edit {{ project.name }} – {% if request.user.role == 'senior_architect' %}Architect{% else %}Admin{% endif %}{% endblock %}
 {% block body_class %}admin-dashboard-page{% endblock %}
 
 {% block extra_head %}
@@ -118,6 +118,24 @@
         .admin-content { padding: 20px; }
         .edit-card-section { padding: 20px; }
     }
+    /* Style for allocation table inputs to ensure dark text and proper focus on light theme */
+    .admin-table input.form-input {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .admin-table input.form-input:focus {
+        border-color: #487244 !important;
+        box-shadow: 0 0 0 3px rgba(72,114,68,0.12) !important;
+        background-color: #ffffff !important;
+    }
+    /* Specific adjustment for number inputs to keep spinner arrows functional and clickable */
+    .admin-table input[type="number"].form-input {
+        padding-right: 4px !important;
+    }
 </style>
 {% endblock %}
 
@@ -126,25 +144,29 @@
     <!-- Sidebar -->
     <aside class="admin-sidebar">
         <div class="admin-sidebar-header">
-            <h1 class="admin-brand">Admin<br>Dashboard</h1>
+            <h1 class="admin-brand">{% if request.user.role == 'senior_architect' %}Architect{% else %}Admin{% endif %}<br>Dashboard</h1>
             <div class="admin-subbrand">Management Portal</div>
         </div>
         <nav class="admin-nav">
             <a href="{% url 'admin_dashboard' %}" class="admin-nav-item">
                 <span class="admin-nav-icon">🛡️</span> Home
             </a>
+            {% if request.user.role == 'admin' or request.user.is_staff or request.user.is_superuser %}
             <a href="{% url 'employee_approval' %}" class="admin-nav-item">
                 <span class="admin-nav-icon">☑️</span> Employee Approval
             </a>
             <a href="{% url 'employee_list' %}" class="admin-nav-item">
                 <span class="admin-nav-icon">👥</span> Employee List
             </a>
+            {% endif %}
             <a href="{% url 'project_list' %}" class="admin-nav-item active">
                 <span class="admin-nav-icon">🗂️</span> Project Directory
             </a>
+            {% if request.user.role == 'admin' or request.user.is_staff or request.user.is_superuser %}
             <a href="{% url 'rejected_registrations' %}" class="admin-nav-item">
                 <span class="admin-nav-icon">🚫</span> Rejected Registrations
             </a>
+            {% endif %}
             <a href="{% url 'logout' %}" class="admin-nav-item" style="margin-top: auto; margin-bottom: 24px; color: #b0b8c4;">
                 <span class="admin-nav-icon" style="display: flex; align-items: center; justify-content: center;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -223,8 +245,8 @@
                     <!-- Team -->
                     <div class="edit-card-section">
                         <p class="edit-section-label">Team Assignment</p>
-                        <div class="form-grid">
-                            <div class="form-field">
+                        <div class="form-grid" style="grid-template-columns: 1fr;">
+                            <div class="form-field" style="max-width: 400px;">
                                 <label for="ep_lead">Project Lead</label>
                                 <select id="ep_lead" name="lead">
                                     <option value="">— No Lead —</option>
@@ -236,17 +258,59 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="form-field">
-                                <label for="ep_allocated_interns">Allocated Interns</label>
-                                <select id="ep_allocated_interns" name="allocated_interns" multiple>
-                                    {% for intern in available_interns %}
-                                        <option value="{{ intern.id }}"
-                                            {% if intern in project.allocated_interns.all %}selected{% endif %}>
-                                            {{ intern.full_name }} ({{ intern.email }})
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                                <span class="field-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</span>
+                            
+                            <div class="form-field" style="margin-top: 20px;">
+                                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Allocated Interns Details</label>
+                                
+                                <div style="display: flex; gap: 12px; margin-bottom: 16px; max-width: 500px; align-items: flex-end;">
+                                    <div style="flex: 1;">
+                                        <label for="add_intern_select" style="font-size: 12px; font-weight: 500; color: var(--admin-text-muted);">Select Intern to Add</label>
+                                        <select id="add_intern_select" style="width: 100%; margin-top: 4px;">
+                                            <option value="" disabled selected>Choose Intern...</option>
+                                            {% for intern in available_interns %}
+                                                <option value="{{ intern.id }}" data-name="{{ intern.full_name }}" data-email="{{ intern.email }}">
+                                                    {{ intern.full_name }} ({{ intern.email }})
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn-cancel" id="btn_add_intern_row" style="padding: 10px 16px; background-color: #f1f5f9; border-color: #cbd5e1; height: 42px;">+ Add Intern</button>
+                                </div>
+
+                                <table class="admin-table" id="allocations_table" style="width: 100%; border: 1px solid var(--admin-border); border-radius: 8px; overflow: hidden; margin-top: 8px;">
+                                    <thead>
+                                        <tr style="background-color: #f8fafc;">
+                                            <th style="padding: 12px 16px; font-size: 12px; text-transform: uppercase; font-weight: 700; color: #64748b;">Intern</th>
+                                            <th style="padding: 12px 16px; font-size: 12px; text-transform: uppercase; font-weight: 700; color: #64748b; width: 220px;">Location</th>
+                                            <th style="padding: 12px 16px; font-size: 12px; text-transform: uppercase; font-weight: 700; color: #64748b; width: 140px;">Allocation %</th>
+                                            <th style="padding: 12px 16px; font-size: 12px; text-transform: uppercase; font-weight: 700; color: #64748b; width: 80px; text-align: center;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="allocations_tbody">
+                                        {% for allocation in project.allocations.all %}
+                                        <tr id="allocation_row_{{ allocation.intern.id }}">
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--admin-border);">
+                                                <input type="hidden" name="allocated_interns" value="{{ allocation.intern.id }}">
+                                                <div style="font-weight: 600; color: #334155;">{{ allocation.intern.full_name }}</div>
+                                                <div style="font-size: 12px; color: #64748b;">{{ allocation.intern.email }}</div>
+                                            </td>
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--admin-border);">
+                                                <input type="text" name="location_{{ allocation.intern.id }}" value="{{ allocation.location }}" placeholder="e.g. Remote, Bangalore" class="form-input" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; color: #0f172a; background-color: #ffffff;">
+                                            </td>
+                                            <td style="padding: 12px 16px; border-bottom: 1px solid var(--admin-border);">
+                                                <input type="number" name="percentage_{{ allocation.intern.id }}" value="{{ allocation.allocation_percentage }}" min="0" max="100" class="form-input percentage-input-field" style="padding: 6px 4px 6px 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; width: 100px; color: #0f172a; background-color: #ffffff;">
+                                            </td>
+                                            <td style="padding: 12px 16px; text-align: center; border-bottom: 1px solid var(--admin-border);">
+                                                <button type="button" class="admin-btn-icon reject" onclick="removeAllocationRow('{{ allocation.intern.id }}')" title="Remove Intern" style="font-size: 16px; padding: 4px; cursor: pointer; border: none; background: none;">✕</button>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr id="no_allocations_row">
+                                            <td colspan="4" style="padding: 24px; text-align: center; color: var(--admin-text-muted); font-size: 14px;">No interns currently allocated. Select an intern above and click "+ Add Intern".</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -340,6 +404,102 @@
             showToast('Network error. Please try again.', 'error');
         });
     });
+
+    document.getElementById('btn_add_intern_row').addEventListener('click', function() {
+        const select = document.getElementById('add_intern_select');
+        const internId = select.value;
+        if (!internId) return;
+
+        // Check if already exists
+        if (document.getElementById('allocation_row_' + internId)) {
+            alert('This intern is already added to the project.');
+            return;
+        }
+
+        // Hide empty state row
+        const noAlloc = document.getElementById('no_allocations_row');
+        if (noAlloc) noAlloc.style.display = 'none';
+
+        const option = select.options[select.selectedIndex];
+        const name = option.getAttribute('data-name');
+        const email = option.getAttribute('data-email');
+
+        // Create new row
+        const tbody = document.getElementById('allocations_tbody');
+        const tr = document.createElement('tr');
+        tr.id = 'allocation_row_' + internId;
+        tr.innerHTML = `
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--admin-border);">
+                <input type="hidden" name="allocated_interns" value="${internId}">
+                <div style="font-weight: 600; color: #334155;">${name}</div>
+                <div style="font-size: 12px; color: #64748b;">${email}</div>
+            </td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--admin-border);">
+                <input type="text" name="location_${internId}" value="" placeholder="e.g. Remote, Bangalore" class="form-input" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; color: #0f172a; background-color: #ffffff;">
+            </td>
+            <td style="padding: 12px 16px; border-bottom: 1px solid var(--admin-border);">
+                <input type="number" name="percentage_${internId}" value="100" min="0" max="100" class="form-input percentage-input-field" style="padding: 6px 4px 6px 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; width: 100px; color: #0f172a; background-color: #ffffff;">
+            </td>
+            <td style="padding: 12px 16px; text-align: center; border-bottom: 1px solid var(--admin-border);">
+                <button type="button" class="admin-btn-icon reject" onclick="removeAllocationRow('${internId}')" title="Remove Intern" style="font-size: 16px; padding: 4px; cursor: pointer; border: none; background: none;">✕</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+
+        // Bind scroll wheel listener to new element
+        const newPctInput = tr.querySelector('.percentage-input-field');
+        if (newPctInput) {
+            setupPercentageScroll(newPctInput);
+        }
+
+        // Reset select dropdown
+        select.value = '';
+    });
+
+    window.removeAllocationRow = function(internId) {
+        const tr = document.getElementById('allocation_row_' + internId);
+        if (tr) {
+            tr.remove();
+        }
+
+        // Show empty state row if no allocations left
+        const tbody = document.getElementById('allocations_tbody');
+        const rows = tbody.querySelectorAll('tr:not(#no_allocations_row)');
+        if (rows.length === 0) {
+            const noAlloc = document.getElementById('no_allocations_row');
+            if (noAlloc) {
+                noAlloc.style.display = '';
+            } else {
+                const emptyTr = document.createElement('tr');
+                emptyTr.id = 'no_allocations_row';
+                emptyTr.innerHTML = `
+                    <td colspan="4" style="padding: 24px; text-align: center; color: var(--admin-text-muted); font-size: 14px;">No interns currently allocated. Select an intern above and click "+ Add Intern".</td>
+                `;
+                tbody.appendChild(emptyTr);
+            }
+        }
+    };
+
+    function setupPercentageScroll(input) {
+        input.addEventListener('wheel', function(e) {
+            if (document.activeElement === input) {
+                e.preventDefault();
+                let step = parseInt(input.getAttribute('step')) || 1;
+                let min = parseInt(input.getAttribute('min')) || 0;
+                let max = parseInt(input.getAttribute('max')) || 100;
+                let val = parseInt(input.value) || 0;
+                if (e.deltaY < 0) {
+                    input.value = Math.min(max, val + step);
+                } else {
+                    input.value = Math.max(min, val - step);
+                }
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }, { passive: false });
+    }
+
+    // Bind scroll wheel listener to all initial elements
+    document.querySelectorAll('.percentage-input-field').forEach(setupPercentageScroll);
 })();
 </script>
 {% endblock %}
