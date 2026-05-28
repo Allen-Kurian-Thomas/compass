@@ -5,7 +5,7 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 import urllib.parse
 from django.views.generic import (
-    TemplateView, FormView, UpdateView, CreateView, DeleteView, View
+    TemplateView, FormView, UpdateView, CreateView, DeleteView, View, DetailView
 )
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -100,11 +100,11 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Mocking active projects since there is no Project model yet
-        context['active_projects'] = 45
+        context['active_projects'] = Project.objects.filter(status='active').count()
         context['total_employees'] = Intern.objects.filter(status='approved', is_staff=False).count()
         context['recent_requests'] = Intern.objects.filter(status='pending').order_by('-date_joined')[:5]
         context['departments'] = DEPARTMENT_CHOICES
+        context['available_interns'] = Intern.objects.filter(status='approved', is_staff=False)
         return context
 
 
@@ -497,4 +497,110 @@ class AdminProjectListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
         context['search_query'] = search_query
         context['status_query'] = status_query
         context['total_count'] = queryset.count()
+        context['available_interns'] = Intern.objects.filter(status='approved', is_staff=False)
         return context
+
+class AdminAddProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def post(self, request, *args, **kwargs):
+        name = request.POST.get('name', '').strip()
+        project_type = request.POST.get('project_type', 'internal').strip()
+        client_department = request.POST.get('client_department', '').strip()
+        timeline = request.POST.get('timeline', '').strip()
+        budget = request.POST.get('budget', '').strip()
+        allocated_intern_ids = request.POST.getlist('allocated_interns')
+
+        errors = {}
+        if not name:
+            errors['name'] = "Project name is required."
+        
+        if errors:
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+            
+        try:
+            project = Project.objects.create(
+                name=name,
+                project_type=project_type,
+                client_department=client_department,
+                timeline=timeline,
+                budget=budget
+            )
+            
+            if allocated_intern_ids:
+                interns = Intern.objects.filter(id__in=allocated_intern_ids)
+                project.allocated_interns.set(interns)
+                
+            return JsonResponse({'success': True, 'message': 'Project created successfully!'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'errors': {'non_field_errors': str(e)}}, status=500)
+
+class AdminProjectDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = Project
+    template_name = 'interns/project_detail.html'
+    context_object_name = 'project'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+
+class AdminEditProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
+
+    def get(self, request, pk, *args, **kwargs):
+        project = get_object_or_404(Project, pk=pk)
+        available_interns = Intern.objects.filter(status='approved', is_staff=False)
+        return render(request, 'interns/edit_project.html', {
+            'project': project,
+            'available_interns': available_interns,
+        })
+
+    def post(self, request, pk, *args, **kwargs):
+        project = get_object_or_404(Project, pk=pk)
+
+        name = request.POST.get('name', '').strip()
+        project_type = request.POST.get('project_type', 'internal').strip()
+        client_department = request.POST.get('client_department', '').strip()
+        timeline = request.POST.get('timeline', '').strip()
+        budget = request.POST.get('budget', '').strip()
+        status = request.POST.get('status', project.status).strip()
+        lead_id = request.POST.get('lead', '').strip()
+        allocated_intern_ids = request.POST.getlist('allocated_interns')
+
+        errors = {}
+        if not name:
+            errors['name'] = 'Project name is required.'
+
+        valid_statuses = [s[0] for s in Project.STATUS_CHOICES]
+        if status not in valid_statuses:
+            errors['status'] = 'Invalid status selected.'
+
+        if errors:
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+        try:
+            project.name = name
+            project.project_type = project_type
+            project.client_department = client_department
+            project.timeline = timeline
+            project.budget = budget
+            project.status = status
+
+            if lead_id:
+                project.lead = get_object_or_404(Intern, pk=lead_id)
+            else:
+                project.lead = None
+
+            project.save()
+
+            if allocated_intern_ids:
+                interns = Intern.objects.filter(id__in=allocated_intern_ids)
+                project.allocated_interns.set(interns)
+            else:
+                project.allocated_interns.clear()
+
+            return JsonResponse({'success': True, 'message': 'Project updated successfully!', 'redirect': '/admin-projects/'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'errors': {'non_field_errors': str(e)}}, status=500)

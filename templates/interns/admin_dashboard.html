@@ -447,7 +447,7 @@
                                 <span class="admin-qa-icon">👤+</span>
                                 Add New Employee
                             </a>
-                            <a href="#" class="admin-qa-btn">
+                            <a href="#" class="admin-qa-btn" onclick="openCreateProjectModal(); return false;">
                                 <span class="admin-qa-icon">📂+</span>
                                 Create Project
                             </a>
@@ -464,4 +464,5 @@
 
 </div>
 {% include 'interns/add_employee_modal.html' %}
+{% include 'interns/create_project_modal.html' %}
 {% endblock %}

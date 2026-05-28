@@ -242,12 +242,18 @@ class Project(models.Model):
         ('finished', 'Finished'),
         ('abandoned', 'Abandoned'),
     ]
+    PROJECT_TYPE_CHOICES = [
+        ('internal', 'Internal'),
+        ('external', 'External'),
+    ]
 
     name = models.CharField(max_length=200)
-    client_department = models.CharField(max_length=200)
-    lead = models.ForeignKey(Intern, on_delete=models.SET_NULL, null=True, related_name='led_projects')
-    timeline = models.CharField(max_length=100)
-    budget = models.CharField(max_length=50)
+    project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default='internal')
+    client_department = models.CharField(max_length=200, blank=True)
+    lead = models.ForeignKey(Intern, on_delete=models.SET_NULL, null=True, blank=True, related_name='led_projects')
+    allocated_interns = models.ManyToManyField(Intern, related_name='allocated_projects', blank=True)
+    timeline = models.CharField(max_length=100, blank=True)
+    budget = models.CharField(max_length=50, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
 

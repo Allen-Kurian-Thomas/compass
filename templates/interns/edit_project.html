@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+{% block title %}Edit {{ project.name }} – Admin{% endblock %}
+{% block body_class %}admin-dashboard-page{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --admin-sidebar-bg: #0b1524;
+        --admin-sidebar-hover: #152233;
+        --admin-sidebar-active: #487244;
+        --admin-sidebar-text: #b0b8c4;
+        --admin-sidebar-text-active: #ffffff;
+        --admin-bg: #f8fafc;
+        --admin-card-bg: #ffffff;
+        --admin-border: #e2e8f0;
+        --admin-text-main: #0f172a;
+        --admin-text-muted: #64748b;
+        --admin-success: #2e5939;
+    }
+
+    body.admin-dashboard-page {
+        margin: 0; font-family: 'Inter', sans-serif;
+        background-color: var(--admin-bg);
+        color: var(--admin-text-main);
+        display: flex; height: 100vh; overflow: hidden;
+    }
+    .admin-layout { display: flex; width: 100%; height: 100%; }
+    .admin-sidebar { width: 260px; background-color: var(--admin-sidebar-bg); display: flex; flex-direction: column; color: var(--admin-sidebar-text); flex-shrink: 0; }
+    .admin-sidebar-header { padding: 30px 24px; }
+    .admin-brand { color: #ffffff; font-size: 20px; font-weight: 700; margin: 0; line-height: 1.2; }
+    .admin-subbrand { font-size: 12px; color: var(--admin-sidebar-text); margin-top: 4px; font-weight: 400; }
+    .admin-nav { flex: 1; padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+    .admin-nav-item { display: flex; align-items: center; padding: 12px 16px; color: var(--admin-sidebar-text); text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+    .admin-nav-item:hover { background-color: var(--admin-sidebar-hover); color: #ffffff; }
+    .admin-nav-item.active { background-color: var(--admin-sidebar-active); color: var(--admin-sidebar-text-active); }
+    .admin-nav-icon { margin-right: 12px; font-size: 18px; width: 24px; text-align: center; }
+    .admin-main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background-color: var(--admin-bg); }
+    .admin-content { padding: 40px; max-width: 860px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+
+    .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--admin-text-muted); text-decoration: none; font-weight: 500; font-size: 14px; margin-bottom: 28px; transition: color 0.2s; }
+    .back-link:hover { color: var(--admin-text-main); }
+
+    .edit-page-header { margin-bottom: 32px; }
+    .edit-page-title { font-size: 30px; font-weight: 700; margin: 0 0 6px 0; color: #0f172a; letter-spacing: -0.5px; }
+    .edit-page-subtitle { color: var(--admin-text-muted); font-size: 15px; margin: 0; }
+
+    /* Card */
+    .edit-card { background: var(--admin-card-bg); border: 1px solid var(--admin-border); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
+    .edit-card-section { padding: 28px 32px; border-bottom: 1px solid var(--admin-border); }
+    .edit-card-section:last-child { border-bottom: none; }
+    .edit-section-label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--admin-text-muted); margin: 0 0 20px 0; }
+
+    /* Fields */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-grid.full { grid-template-columns: 1fr; }
+    .form-field { display: flex; flex-direction: column; gap: 6px; }
+    .form-field label { font-size: 13px; font-weight: 600; color: #374151; }
+    .form-field label .req { color: #ef4444; margin-left: 2px; }
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+        padding: 10px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        color: var(--admin-text-main);
+        background: #fff;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+        width: 100%;
+    }
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+        border-color: #487244;
+        box-shadow: 0 0 0 3px rgba(72,114,68,0.12);
+    }
+    .form-field select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; cursor: pointer; }
+    .form-field select[multiple] { background-image: none; padding: 8px 12px; height: 120px; }
+    .form-field .field-hint { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .field-error { font-size: 12px; color: #ef4444; margin-top: 2px; min-height: 16px; display: block; }
+
+    /* Global error */
+    .global-error-box {
+        background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;
+        padding: 12px 16px; color: #991b1b; font-size: 14px;
+        margin-bottom: 20px; display: none;
+    }
+
+    /* Toast */
+    .toast {
+        position: fixed; bottom: 28px; right: 28px;
+        background: #1e293b; color: #fff;
+        padding: 14px 22px; border-radius: 10px;
+        font-size: 14px; font-weight: 500;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        display: flex; align-items: center; gap: 10px;
+        opacity: 0; transform: translateY(12px);
+        transition: opacity 0.3s, transform 0.3s;
+        z-index: 9999; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: #2e5939; }
+    .toast.error { background: #991b1b; }
+
+    /* Footer */
+    .edit-card-footer { padding: 20px 32px; background: #f8fafc; border-top: 1px solid var(--admin-border); display: flex; justify-content: flex-end; gap: 12px; }
+    .btn-cancel { padding: 10px 22px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #475569; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; transition: all 0.2s; }
+    .btn-cancel:hover { background: #f1f5f9; border-color: #94a3b8; }
+    .btn-save { padding: 10px 22px; border: none; border-radius: 8px; background: #2e5939; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s, opacity 0.2s; }
+    .btn-save:hover { background: #21422a; }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    @media (max-width: 640px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .admin-content { padding: 20px; }
+        .edit-card-section { padding: 20px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <h1 class="admin-brand">Admin<br>Dashboard</h1>
+            <div class="admin-subbrand">Management Portal</div>
+        </div>
+        <nav class="admin-nav">
+            <a href="{% url 'admin_dashboard' %}" class="admin-nav-item">
+                <span class="admin-nav-icon">🛡️</span> Home
+            </a>
+            <a href="{% url 'employee_approval' %}" class="admin-nav-item">
+                <span class="admin-nav-icon">☑️</span> Employee Approval
+            </a>
+            <a href="{% url 'employee_list' %}" class="admin-nav-item">
+                <span class="admin-nav-icon">👥</span> Employee List
+            </a>
+            <a href="{% url 'project_list' %}" class="admin-nav-item active">
+                <span class="admin-nav-icon">🗂️</span> Project Directory
+            </a>
+            <a href="{% url 'rejected_registrations' %}" class="admin-nav-item">
+                <span class="admin-nav-icon">🚫</span> Rejected Registrations
+            </a>
+            <a href="{% url 'logout' %}" class="admin-nav-item" style="margin-top: auto; margin-bottom: 24px; color: #b0b8c4;">
+                <span class="admin-nav-icon" style="display: flex; align-items: center; justify-content: center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </span>
+                Logout
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <button class="admin-mobile-menu-btn" onclick="toggleAdminSidebar()">☰</button>
+            <h2 class="admin-topbar-title"></h2>
+        </header>
+        <div class="admin-content" style="padding-top: 40px;">
+
+            <a href="{% url 'project_list' %}" class="back-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Back to Projects
+            </a>
+
+            <div class="edit-page-header">
+                <h2 class="edit-page-title">Edit Project</h2>
+                <p class="edit-page-subtitle">Update the details for <strong>{{ project.name }}</strong></p>
+            </div>
+
+            <div id="globalErrorBox" class="global-error-box"></div>
+
+            <form id="editProjectForm" novalidate>
+                {% csrf_token %}
+
+                <div class="edit-card">
+
+                    <!-- Basic Info -->
+                    <div class="edit-card-section">
+                        <p class="edit-section-label">Basic Information</p>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="ep_name">Project Name <span class="req">*</span></label>
+                                <input type="text" id="ep_name" name="name" value="{{ project.name }}" placeholder="e.g. Website Redesign" required>
+                                <span class="field-error" id="err_name"></span>
+                            </div>
+                            <div class="form-field">
+                                <label for="ep_project_type">Project Type</label>
+                                <select id="ep_project_type" name="project_type">
+                                    <option value="internal" {% if project.project_type == 'internal' %}selected{% endif %}>Internal</option>
+                                    <option value="external" {% if project.project_type == 'external' %}selected{% endif %}>External</option>
+                                </select>
+                                <span class="field-error" id="err_project_type"></span>
+                            </div>
+                            <div class="form-field">
+                                <label for="ep_client_department">Client / Department</label>
+                                <input type="text" id="ep_client_department" name="client_department" value="{{ project.client_department }}" placeholder="e.g. Acme Corp">
+                            </div>
+                            <div class="form-field">
+                                <label for="ep_status">Status</label>
+                                <select id="ep_status" name="status">
+                                    <option value="active"    {% if project.status == 'active'    %}selected{% endif %}>Active</option>
+                                    <option value="finished"  {% if project.status == 'finished'  %}selected{% endif %}>Finished</option>
+                                    <option value="abandoned" {% if project.status == 'abandoned' %}selected{% endif %}>Abandoned</option>
+                                </select>
+                                <span class="field-error" id="err_status"></span>
+                            </div>
+                            <div class="form-field">
+                                <label for="ep_timeline">Timeline</label>
+                                <input type="text" id="ep_timeline" name="timeline" value="{{ project.timeline }}" placeholder="e.g. 3 Months">
+                            </div>
+                            <div class="form-field">
+                                <label for="ep_budget">Budget</label>
+                                <input type="text" id="ep_budget" name="budget" value="{{ project.budget }}" placeholder="e.g. $10,000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team -->
+                    <div class="edit-card-section">
+                        <p class="edit-section-label">Team Assignment</p>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="ep_lead">Project Lead</label>
+                                <select id="ep_lead" name="lead">
+                                    <option value="">— No Lead —</option>
+                                    {% for intern in available_interns %}
+                                        <option value="{{ intern.id }}"
+                                            {% if project.lead and project.lead.id == intern.id %}selected{% endif %}>
+                                            {{ intern.full_name }} ({{ intern.email }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label for="ep_allocated_interns">Allocated Interns</label>
+                                <select id="ep_allocated_interns" name="allocated_interns" multiple>
+                                    {% for intern in available_interns %}
+                                        <option value="{{ intern.id }}"
+                                            {% if intern in project.allocated_interns.all %}selected{% endif %}>
+                                            {{ intern.full_name }} ({{ intern.email }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="field-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="edit-card-footer">
+                        <a href="{% url 'project_list' %}" class="btn-cancel" id="ep_cancel">Cancel</a>
+                        <button type="submit" class="btn-save" id="ep_saveBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Save Changes
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+    </main>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="ep_toast"></div>
+
+<script>
+(function () {
+    const form       = document.getElementById('editProjectForm');
+    const saveBtn    = document.getElementById('ep_saveBtn');
+    const globalErr  = document.getElementById('globalErrorBox');
+    const toast      = document.getElementById('ep_toast');
+    const postUrl    = "{% url 'project_edit' project.pk %}";
+
+    function showToast(msg, type) {
+        toast.textContent = msg;
+        toast.className   = 'toast ' + type;
+        // force reflow
+        void toast.offsetWidth;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function clearErrors() {
+        document.querySelectorAll('#editProjectForm .field-error').forEach(el => el.textContent = '');
+        globalErr.textContent = '';
+        globalErr.style.display = 'none';
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        clearErrors();
+
+        saveBtn.disabled    = true;
+        saveBtn.innerHTML   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke-dasharray="63" stroke-dashoffset="20"></circle></svg> Saving…';
+
+        const formData = new FormData(this);
+
+        fetch(postUrl, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+            if (ok && data.success) {
+                showToast('✓ Project updated successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = data.redirect || "{% url 'project_list' %}";
+                }, 1200);
+            } else {
+                saveBtn.disabled  = false;
+                saveBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Save Changes';
+
+                if (data.errors) {
+                    for (const [field, message] of Object.entries(data.errors)) {
+                        if (field === 'non_field_errors') {
+                            globalErr.textContent  = message;
+                            globalErr.style.display = 'block';
+                        } else {
+                            const span = document.getElementById('err_' + field);
+                            if (span) span.textContent = message;
+                        }
+                    }
+                } else {
+                    globalErr.textContent  = 'An unexpected error occurred. Please try again.';
+                    globalErr.style.display = 'block';
+                }
+            }
+        })
+        .catch(() => {
+            saveBtn.disabled  = false;
+            saveBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Save Changes';
+            showToast('Network error. Please try again.', 'error');
+        });
+    });
+})();
+</script>
+{% endblock %}

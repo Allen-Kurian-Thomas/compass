@@ -132,7 +132,7 @@
     <main class="admin-main">
         <header class="admin-topbar">
             <button class="admin-mobile-menu-btn" onclick="toggleAdminSidebar()">☰</button>
-            <h2 class="admin-topbar-title">Project List</h2>
+            <h2 class="admin-topbar-title"></h2>
         </header>
         <div class="admin-content" style="padding-top: 40px;">
             <div class="admin-page-header-row">
@@ -140,7 +140,7 @@
                     <h2 class="admin-page-title">Project Directory</h2>
                     <p class="admin-page-subtitle">Manage and track corporate initiatives.</p>
                 </div>
-                <a href="#" class="btn-add-employee">
+                <a href="#" class="btn-add-employee" onclick="openCreateProjectModal(); return false;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     Create New Project
                 </a>
@@ -182,7 +182,7 @@
                         {% for project in projects %}
                         <tr>
                             <td>
-                                <span style="font-weight: 600; color: #334155;">{{ project.name }}</span>
+                                <a href="{% url 'project_detail' project.pk %}" style="font-weight: 600; color: #334155; text-decoration: none;">{{ project.name }}</a>
                             </td>
                             <td>
                                 <span style="color: #475569;">{{ project.client_department }}</span>
@@ -220,10 +220,10 @@
                             </td>
                             <td>
                                 <div class="action-icons-cell">
-                                    <a href="#" class="action-icon" title="View Details">
+                                    <a href="{% url 'project_detail' project.pk %}" class="action-icon" title="View Details">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                                     </a>
-                                    <a href="#" class="action-icon" title="Edit Project">
+                                    <a href="{% url 'project_edit' project.pk %}" class="action-icon" title="Edit Project">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                     </a>
                                 </div>
@@ -274,5 +274,5 @@
     </main>
 
 </div>
-
+{% include 'interns/create_project_modal.html' %}
 {% endblock %}

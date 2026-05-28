@@ -1,0 +1,154 @@
+<!-- Create Project Modal -->
+<div class="add-employee-modal" id="createProjectModal" style="display: none;">
+    <div class="add-employee-backdrop" onclick="closeCreateProjectModal()"></div>
+    <div class="add-employee-content">
+        <div class="add-employee-header">
+            <h3 class="add-employee-title">Create New Project</h3>
+            <button type="button" class="add-employee-close" onclick="closeCreateProjectModal()">×</button>
+        </div>
+        <form id="createProjectForm" method="POST" novalidate>
+            {% csrf_token %}
+            <div class="add-employee-body">
+                <div class="form-error-box" id="createProjectGlobalError" style="display: none; margin-bottom: 16px;"></div>
+
+                <div class="add-employee-field">
+                    <label for="id_project_name">Project Name <span style="color:red">*</span></label>
+                    <input type="text" id="id_project_name" name="name" placeholder="e.g. Website Redesign" required>
+                    <span class="field-error" id="error_name"></span>
+                </div>
+
+                <div class="add-employee-field">
+                    <label for="id_project_type">Project Type <span style="color:red">*</span></label>
+                    <div class="select-wrapper">
+                        <select id="id_project_type" name="project_type" required>
+                            <option value="internal">Internal</option>
+                            <option value="external">External</option>
+                        </select>
+                    </div>
+                    <span class="field-error" id="error_project_type"></span>
+                </div>
+
+                <div class="add-employee-field">
+                    <label for="id_allocated_interns">Allocate Interns</label>
+                    <div class="select-wrapper">
+                        <select id="id_allocated_interns" name="allocated_interns" multiple style="height: 100px;">
+                            {% for intern in available_interns %}
+                                <option value="{{ intern.id }}">{{ intern.full_name }} ({{ intern.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <span class="field-help">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</span>
+                    <span class="field-error" id="error_allocated_interns"></span>
+                </div>
+
+                <div class="add-employee-field">
+                    <label for="id_client_department">Client/Department (Optional)</label>
+                    <input type="text" id="id_client_department" name="client_department" placeholder="e.g. Acme Corp">
+                </div>
+
+                <div class="add-employee-field">
+                    <label for="id_timeline">Timeline (Optional)</label>
+                    <input type="text" id="id_timeline" name="timeline" placeholder="e.g. 3 Months">
+                </div>
+
+                <div class="add-employee-field">
+                    <label for="id_budget">Budget (Optional)</label>
+                    <input type="text" id="id_budget" name="budget" placeholder="e.g. $10,000">
+                </div>
+            </div>
+            <div class="add-employee-footer">
+                <button type="button" class="btn-modal-cancel" onclick="closeCreateProjectModal()">Cancel</button>
+                <button type="submit" class="btn-modal-submit">Create Project</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Reuse modal styling from add_employee_modal for create_project_modal if necessary */
+    /* Add multiple select basic styling */
+    select[multiple] {
+        padding: 8px;
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        background-color: #ffffff;
+    }
+</style>
+
+<script>
+    function openCreateProjectModal() {
+        document.getElementById('createProjectForm').reset();
+        document.querySelectorAll('#createProjectForm .field-error').forEach(el => el.textContent = '');
+        const globalError = document.getElementById('createProjectGlobalError');
+        globalError.textContent = '';
+        globalError.style.display = 'none';
+        
+        document.getElementById('createProjectModal').style.display = 'flex';
+    }
+
+    function closeCreateProjectModal() {
+        document.getElementById('createProjectModal').style.display = 'none';
+    }
+
+    window.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeCreateProjectModal();
+        }
+    });
+
+    document.getElementById('createProjectForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        document.querySelectorAll('#createProjectForm .field-error').forEach(el => el.textContent = '');
+        const globalError = document.getElementById('createProjectGlobalError');
+        globalError.textContent = '';
+        globalError.style.display = 'none';
+
+        const submitBtn = this.querySelector('.btn-modal-submit');
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Creating...';
+
+        const formData = new FormData(this);
+
+        fetch("{% url 'admin_add_project' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json().then(data => {
+            if (!response.ok) throw { data: data };
+            return data;
+        }))
+        .then(data => {
+            if (data.success) {
+                closeCreateProjectModal();
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+
+            if (error.data && error.data.errors) {
+                for (const [field, message] of Object.entries(error.data.errors)) {
+                    if (field === 'non_field_errors') {
+                        globalError.textContent = message;
+                        globalError.style.display = 'block';
+                    } else {
+                        const errorSpan = document.getElementById(`error_${field}`);
+                        if (errorSpan) errorSpan.textContent = message;
+                    }
+                }
+            } else {
+                globalError.textContent = 'An unexpected error occurred. Please try again.';
+                globalError.style.display = 'block';
+            }
+        });
+    });
+</script>

@@ -587,6 +587,14 @@ textarea.form-input { resize: vertical; min-height: 90px; }
     .screenshot-content {
         padding: 8px !important;
     }
+    
+    .add-employee-body {
+        padding: 16px !important;
+    }
+    
+    .add-employee-footer {
+        padding: 12px 16px !important;
+    }
 }
 
 /* ============================================
@@ -627,6 +635,13 @@ textarea.form-input { resize: vertical; min-height: 90px; }
     z-index: 1001;
     overflow: hidden;
     animation: modalSlideUp 0.3s ease;
+}
+
+.add-employee-content form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
 }
 
 @keyframes modalSlideUp {
