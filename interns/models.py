@@ -327,3 +327,30 @@ class RejectedCandidate(models.Model):
             except Exception:
                 return None
         return None
+
+
+class ProgressReport(models.Model):
+    ROLE_CHOICES = [
+        ('designer', 'Designer'),
+        ('developer', 'Developer'),
+        ('tester', 'Tester'),
+        ('manager', 'Manager'),
+        ('other', 'Other'),
+    ]
+
+    intern = models.ForeignKey(Intern, on_delete=models.CASCADE, related_name='progress_reports')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='progress_reports')
+    report_date = models.DateField(default=timezone.now)
+    hours_worked = models.DecimalField(decimal_places=2, max_digits=5)
+    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='developer')
+    technology_stack = models.CharField(max_length=255, blank=True)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Progress Report'
+        verbose_name_plural = 'Progress Reports'
+        ordering = ['-report_date', '-created_at']
+
+    def __str__(self):
+        return f"{self.intern.full_name} - {self.project.name} ({self.report_date})"

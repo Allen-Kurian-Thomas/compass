@@ -533,11 +533,11 @@ body.portal-bg {
 .form-control {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #C4C6CD;
     border-radius: 4px;
     font-size: 13px;
     color: #0f172a;
-    background-color: #ffffff;
+    background-color: #fbf9fa;
 }
 
 .form-control:focus {
@@ -715,3 +715,12 @@ textarea.form-control {
         justify-content: flex-end !important;
     }
 }
+
+input.input-with-icon {
+    padding-left: 36px !important;
+}
+
+.progress-report-card .form-control {
+    background-color: #ffffff !important;
+}
+

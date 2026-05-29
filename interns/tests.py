@@ -1,6 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-from .models import Intern, Project
+from .models import Intern, Project, ProgressReport, ProjectAllocation
 
 class RolePermissionTestCase(TestCase):
     def setUp(self):
@@ -125,3 +125,86 @@ class RolePermissionTestCase(TestCase):
         allocation = project.allocations.first()
         self.assertEqual(allocation.location, 'Bangalore')
         self.assertEqual(allocation.allocation_percentage, 50)
+
+
+class ProgressReportTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.intern = Intern.objects.create_user(
+            email='intern@test.com',
+            full_name='Test Intern',
+            password='Password123!',
+            status='approved',
+            role='intern'
+        )
+        self.project_active = Project.objects.create(
+            name='Active Project',
+            status='active'
+        )
+        self.project_inactive = Project.objects.create(
+            name='Inactive Project',
+            status='finished'
+        )
+
+    def test_submit_eod_view_requires_login(self):
+        response = self.client.get(reverse('submit_eod'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('login'), response.url)
+
+    def test_submit_eod_view_get(self):
+        self.client.force_login(self.intern)
+        response = self.client.get(reverse('submit_eod'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'interns/progress_report.html')
+        self.assertIn('form', response.context)
+        self.assertIn('reports', response.context)
+
+    def test_submit_eod_view_post_success(self):
+        self.client.force_login(self.intern)
+        response = self.client.post(reverse('submit_eod'), {
+            'project': self.project_active.id,
+            'report_date': '2026-05-29',
+            'hours_worked': '8.0',
+            'role': 'developer',
+            'technology_stack': 'React, Django',
+            'description': 'Did some frontend and backend work.'
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(ProgressReport.objects.count(), 1)
+        report = ProgressReport.objects.first()
+        self.assertEqual(report.intern, self.intern)
+        self.assertEqual(report.project, self.project_active)
+        self.assertEqual(report.hours_worked, 8.0)
+        self.assertEqual(report.role, 'developer')
+        self.assertEqual(report.technology_stack, 'React, Django')
+        self.assertEqual(report.description, 'Did some frontend and backend work.')
+
+    def test_submit_eod_view_project_filtering(self):
+        self.client.force_login(self.intern)
+        # When intern has no allocations, they see all active projects in the dropdown
+        response = self.client.get(reverse('submit_eod'))
+        form = response.context['form']
+        project_queryset = form.fields['project'].queryset
+        self.assertIn(self.project_active, project_queryset)
+        self.assertNotIn(self.project_inactive, project_queryset)
+
+        # Let's allocate intern to self.project_active
+        ProjectAllocation.objects.create(
+            project=self.project_active,
+            intern=self.intern,
+            location='WFH',
+            allocation_percentage=100
+        )
+        # Create another active project that this intern is not allocated to
+        other_active_project = Project.objects.create(
+            name='Other Active Project',
+            status='active'
+        )
+
+        response = self.client.get(reverse('submit_eod'))
+        form = response.context['form']
+        project_queryset = form.fields['project'].queryset
+        # Now, they should only see self.project_active, not other_active_project because they are allocated to project_active
+        self.assertIn(self.project_active, project_queryset)
+        self.assertNotIn(other_active_project, project_queryset)
+

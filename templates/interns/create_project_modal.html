@@ -1,119 +1,198 @@
 <!-- Create Project Modal -->
 <div class="add-employee-modal" id="createProjectModal" style="display: none;">
     <div class="add-employee-backdrop" onclick="closeCreateProjectModal()"></div>
-    <div class="add-employee-content">
-        <div class="add-employee-header">
-            <h3 class="add-employee-title">Create New Project</h3>
-            <button type="button" class="add-employee-close" onclick="closeCreateProjectModal()">×</button>
+    <div class="add-employee-content" style="max-width: 750px; width: 90%; background: #f8fafc; padding: 24px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); overflow: hidden;">
+        
+        <!-- Breadcrumbs and Header -->
+        <div style="margin-bottom: 20px;">
+            <div style="font-size: 11px; color: #64748b; margin-bottom: 6px; font-weight: 500;">
+                Project &gt; <span style="font-weight: 600; color: #0f172a;">Create New Project</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">Create New Project</h2>
+                <button type="button" class="add-employee-close" onclick="closeCreateProjectModal()" style="font-size: 24px; color: #94a3b8; background: none; border: none; cursor: pointer; padding: 4px;">×</button>
+            </div>
         </div>
+
+        <!-- Modal Tabs -->
+        <div class="modal-tabs" style="display: flex; gap: 24px; border-bottom: 1px solid #e2e8f0; margin-bottom: 24px;">
+            <button type="button" id="tab-details-btn" class="modal-tab-btn active" onclick="switchModalTab('details')" style="background: none; border: none; padding: 12px 4px; font-size: 14px; font-weight: 600; color: #0f172a; border-bottom: 2px solid #2e5939; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                Project Details
+            </button>
+            <button type="button" id="tab-resources-btn" class="modal-tab-btn" onclick="switchModalTab('resources')" style="background: none; border: none; padding: 12px 4px; font-size: 14px; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Resources
+            </button>
+        </div>
+
         <form id="createProjectForm" method="POST" novalidate>
             {% csrf_token %}
-            <div class="add-employee-body">
-                <div class="form-error-box" id="createProjectGlobalError" style="display: none; margin-bottom: 16px;"></div>
+            <div class="form-error-box" id="createProjectGlobalError" style="display: none; margin-bottom: 16px; background-color: #fef2f2; color: #991b1b; padding: 12px 16px; border-radius: 6px; font-size: 13px;"></div>
 
-                <div class="add-employee-field">
-                    <label for="id_project_name">Project Name <span style="color:red">*</span></label>
-                    <input type="text" id="id_project_name" name="name" placeholder="e.g. Website Redesign" required>
-                    <span class="field-error" id="error_name"></span>
-                </div>
+            <!-- Tab Content Card -->
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; min-height: 380px; box-sizing: border-box;">
+                
+                <!-- Tab 1: Project Details -->
+                <div id="tab-details-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        
+                        <div class="modal-form-group">
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px;">Project Name <span style="color:red">*</span></label>
+                            <input type="text" name="name" placeholder="Enter project name" required style="width: 100%; padding: 10px 12px; border: 1px solid #C4C6CD; border-radius: 6px; font-size: 13px; color: #0f172a; background-color: #fbf9fa; outline: none; box-sizing: border-box;">
+                            <span class="field-error" id="error_name" style="color: #ef4444; font-size: 11px; margin-top: 4px; display: block;"></span>
+                        </div>
 
-                <div class="add-employee-field">
-                    <label for="id_project_type">Project Type <span style="color:red">*</span></label>
-                    <div class="select-wrapper">
-                        <select id="id_project_type" name="project_type" required>
-                            <option value="internal">Internal</option>
-                            <option value="external">External</option>
-                        </select>
-                    </div>
-                    <span class="field-error" id="error_project_type"></span>
-                </div>
-
-                <div class="add-employee-field" style="margin-bottom: 20px;">
-                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Allocate Interns</label>
-                    <div style="display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end;">
-                        <div style="flex: 1;" class="select-wrapper">
-                            <select id="id_add_intern_select">
-                                <option value="" disabled selected>Select Intern to Add...</option>
-                                {% for intern in available_interns %}
-                                    <option value="{{ intern.id }}" data-name="{{ intern.full_name }}" data-email="{{ intern.email }}">
-                                        {{ intern.full_name }} ({{ intern.email }})
-                                    </option>
-                                {% endfor %}
+                        <div class="modal-form-group">
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px;">Customer</label>
+                            <select name="client_department" style="width: 100%; padding: 10px 12px; border: 1px solid #C4C6CD; border-radius: 6px; font-size: 13px; color: #0f172a; background-color: #fbf9fa; outline: none; box-sizing: border-box; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2364748b\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
+                                <option value="" disabled selected>Select Customer</option>
+                                <option value="Acme Corp">Acme Corp</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Design">Design</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Sales">Sales</option>
+                                <option value="R&D">R&D</option>
+                                <option value="Operations">Operations</option>
                             </select>
                         </div>
-                        <button type="button" class="btn-modal-cancel" id="btn_modal_add_intern" style="height: 42px; margin: 0; padding: 0 16px; font-size: 14px; border: 1px solid #cbd5e1;">+ Add</button>
                     </div>
 
-                    <table class="admin-table" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; display: none;" id="modal_allocations_table">
-                        <thead>
-                            <tr style="background-color: #f8fafc; font-size: 11px;">
-                                <th style="padding: 8px 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Intern</th>
-                                <th style="padding: 8px 12px; font-weight: 700; color: #64748b; text-transform: uppercase; width: 140px;">Location</th>
-                                <th style="padding: 8px 12px; font-weight: 700; color: #64748b; text-transform: uppercase; width: 90px;">Alloc %</th>
-                                <th style="padding: 8px 12px; width: 40px; text-align: center;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="modal_allocations_tbody">
-                        </tbody>
-                    </table>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div class="modal-form-group">
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px;">Project Type <span style="color:red">*</span></label>
+                            <select name="project_type" required style="width: 100%; padding: 10px 12px; border: 1px solid #C4C6CD; border-radius: 6px; font-size: 13px; color: #0f172a; background-color: #fbf9fa; outline: none; box-sizing: border-box; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2364748b\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
+                                <option value="" disabled selected>Select Type</option>
+                                <option value="internal">Internal</option>
+                                <option value="external">External</option>
+                            </select>
+                            <span class="field-error" id="error_project_type" style="color: #ef4444; font-size: 11px; margin-top: 4px; display: block;"></span>
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px;">Project Category</label>
+                            <select name="timeline" style="width: 100%; padding: 10px 12px; border: 1px solid #C4C6CD; border-radius: 6px; font-size: 13px; color: #0f172a; background-color: #fbf9fa; outline: none; box-sizing: border-box; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2364748b\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
+                                <option value="" disabled selected>Select Category</option>
+                                <option value="Web Development">Web Development</option>
+                                <option value="Mobile App">Mobile App</option>
+                                <option value="Cloud Migration">Cloud Migration</option>
+                                <option value="UI/UX Design">UI/UX Design</option>
+                                <option value="Consulting">Consulting</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div class="modal-form-group">
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px;">Technology</label>
+                            <select name="budget" style="width: 100%; padding: 10px 12px; border: 1px solid #C4C6CD; border-radius: 6px; font-size: 13px; color: #0f172a; background-color: #fbf9fa; outline: none; box-sizing: border-box; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2364748b\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
+                                <option value="" disabled selected>Select Tech Stack</option>
+                                <option value="React, Django">React, Django</option>
+                                <option value="Next.js, Node.js">Next.js, Node.js</option>
+                                <option value="Flutter, Firebase">Flutter, Firebase</option>
+                                <option value="Figma, HTML/CSS">Figma, HTML/CSS</option>
+                                <option value="Python, AI/ML">Python, AI/ML</option>
+                            </select>
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px;">Project Status</label>
+                            <select name="status" style="width: 100%; padding: 10px 12px; border: 1px solid #C4C6CD; border-radius: 6px; font-size: 13px; color: #0f172a; background-color: #fbf9fa; outline: none; box-sizing: border-box; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2364748b\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
+                                <option value="active" selected>Active</option>
+                                <option value="finished">Finished</option>
+                                <option value="abandoned">Abandoned</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div class="modal-form-group">
+                            <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px;">Date of Creation</label>
+                            <input type="text" id="id_creation_date_display" readonly style="width: 100%; padding: 10px 12px; border: 1px solid #C4C6CD; border-radius: 6px; font-size: 13px; color: #64748b; background-color: #e2e8f0; outline: none; box-sizing: border-box; cursor: not-allowed;">
+                        </div>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px;">Project Description</label>
+                        <textarea name="description" placeholder="Enter detailed project requirements and scope..." rows="4" style="width: 100%; padding: 10px 12px; border: 1px solid #C4C6CD; border-radius: 6px; font-size: 13px; color: #0f172a; background-color: #fbf9fa; outline: none; box-sizing: border-box; resize: vertical; min-height: 80px;"></textarea>
+                    </div>
                 </div>
 
-                <div class="add-employee-field">
-                    <label for="id_client_department">Client/Department (Optional)</label>
-                    <input type="text" id="id_client_department" name="client_department" placeholder="e.g. Acme Corp">
+                <!-- Tab 2: Resources -->
+                <div id="tab-resources-content" style="display: none;">
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-weight: 600; font-size: 13px; color: #374151; margin-bottom: 8px; display: block;">Allocate Interns</label>
+                        <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-end;">
+                            <div style="flex: 1;" class="select-wrapper">
+                                <select id="id_add_intern_select" style="width: 100%; padding: 10px 12px; border: 1px solid #C4C6CD; border-radius: 6px; font-size: 13px; color: #0f172a; background-color: #fbf9fa; outline: none; box-sizing: border-box; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2364748b\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e'); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;">
+                                    <option value="" disabled selected>Select Intern to Add...</option>
+                                    {% for intern in available_interns %}
+                                        <option value="{{ intern.id }}" data-name="{{ intern.full_name }}" data-email="{{ intern.email }}">
+                                            {{ intern.full_name }} ({{ intern.email }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="button" class="btn-modal-cancel" id="btn_modal_add_intern" style="height: 40px; margin: 0; padding: 0 16px; font-size: 13px; font-weight: 600; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 6px; cursor: pointer; color: #475569;">+ Add</button>
+                        </div>
+
+                        <table class="admin-table" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; display: none;" id="modal_allocations_table">
+                            <thead>
+                                <tr style="background-color: #f8fafc; font-size: 11px;">
+                                    <th style="padding: 10px 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Intern</th>
+                                    <th style="padding: 10px 12px; font-weight: 700; color: #64748b; text-transform: uppercase; width: 160px;">Location</th>
+                                    <th style="padding: 10px 12px; font-weight: 700; color: #64748b; text-transform: uppercase; width: 100px;">Alloc %</th>
+                                    <th style="padding: 10px 12px; width: 40px; text-align: center;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal_allocations_tbody">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div class="add-employee-field">
-                    <label for="id_timeline">Timeline (Optional)</label>
-                    <input type="text" id="id_timeline" name="timeline" placeholder="e.g. 3 Months">
-                </div>
-
-                <div class="add-employee-field">
-                    <label for="id_budget">Budget (Optional)</label>
-                    <input type="text" id="id_budget" name="budget" placeholder="e.g. $10,000">
-                </div>
             </div>
-            <div class="add-employee-footer">
-                <button type="button" class="btn-modal-cancel" onclick="closeCreateProjectModal()">Cancel</button>
-                <button type="submit" class="btn-modal-submit">Create Project</button>
+
+            <!-- Footer Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" class="btn-modal-cancel" onclick="closeCreateProjectModal()" style="padding: 10px 24px; font-size: 13px; font-weight: 600; color: #374151; background: #f1f3f5; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; transition: all 0.2s;">Cancel</button>
+                <button type="submit" class="btn-modal-submit" style="padding: 10px 24px; font-size: 13px; font-weight: 600; color: #ffffff; background: #2e5939; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;">Save Project</button>
             </div>
         </form>
     </div>
 </div>
 
 <style>
-    /* Reuse modal styling from add_employee_modal for create_project_modal if necessary */
-    /* Add multiple select basic styling */
-    select[multiple] {
-        padding: 8px;
-        width: 100%;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        font-family: inherit;
-        font-size: 14px;
-        background-color: #ffffff;
+    /* Styling adjustments specifically for this tabbed modal */
+    .modal-tab-btn.active {
+        color: #2e5939 !important;
+        border-bottom: 2px solid #2e5939 !important;
     }
-    /* Style for allocation table inputs to ensure dark text and proper focus on light theme */
-    .admin-table input.form-input {
+    .modal-tab-btn:not(.active):hover {
         color: #0f172a !important;
-        background-color: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        font-family: inherit;
-        outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .admin-table input.form-input:focus {
-        border-color: #487244 !important;
-        box-shadow: 0 0 0 3px rgba(72,114,68,0.12) !important;
-        background-color: #ffffff !important;
-    }
-    /* Specific adjustment for number inputs to keep spinner arrows functional and clickable */
-    .admin-table input[type="number"].form-input {
-        padding-right: 4px !important;
     }
 </style>
 
 <script>
+    function switchModalTab(tabName) {
+        const detailsBtn = document.getElementById('tab-details-btn');
+        const resourcesBtn = document.getElementById('tab-resources-btn');
+        const detailsContent = document.getElementById('tab-details-content');
+        const resourcesContent = document.getElementById('tab-resources-content');
+
+        if (tabName === 'details') {
+            detailsBtn.classList.add('active');
+            resourcesBtn.classList.remove('active');
+            detailsContent.style.display = 'block';
+            resourcesContent.style.display = 'none';
+        } else {
+            detailsBtn.classList.remove('active');
+            resourcesBtn.classList.add('active');
+            detailsContent.style.display = 'none';
+            resourcesContent.style.display = 'block';
+        }
+    }
+
     function openCreateProjectModal() {
         document.getElementById('createProjectForm').reset();
         document.querySelectorAll('#createProjectForm .field-error').forEach(el => el.textContent = '');
@@ -121,6 +200,13 @@
         globalError.textContent = '';
         globalError.style.display = 'none';
         
+        // Reset tab view to details
+        switchModalTab('details');
+
+        // Populate creation date with today's date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('id_creation_date_display').value = today;
+
         // Clear modal allocations
         document.getElementById('modal_allocations_tbody').innerHTML = '';
         document.getElementById('modal_allocations_table').style.display = 'none';
@@ -149,7 +235,7 @@
         const submitBtn = this.querySelector('.btn-modal-submit');
         submitBtn.disabled = true;
         const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Creating...';
+        submitBtn.textContent = 'Saving...';
 
         const formData = new FormData(this);
 
@@ -174,6 +260,9 @@
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
 
+            // Automatically switch back to details tab if there are errors there
+            switchModalTab('details');
+
             if (error.data && error.data.errors) {
                 for (const [field, message] of Object.entries(error.data.errors)) {
                     if (field === 'non_field_errors') {
@@ -190,6 +279,7 @@
             }
         });
     });
+
     document.getElementById('btn_modal_add_intern').addEventListener('click', function() {
         const select = document.getElementById('id_add_intern_select');
         const internId = select.value;
@@ -213,18 +303,18 @@
         const tr = document.createElement('tr');
         tr.id = 'modal_allocation_row_' + internId;
         tr.innerHTML = `
-            <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">
                 <input type="hidden" name="allocated_interns" value="${internId}">
                 <div style="font-weight: 600; color: #334155; font-size: 13px;">${name}</div>
                 <div style="font-size: 11px; color: #64748b;">${email}</div>
             </td>
-            <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">
-                <input type="text" name="location_${internId}" value="" placeholder="e.g. Remote" class="form-input" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 12px; width: 100%; color: #0f172a; background-color: #ffffff;">
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">
+                <input type="text" name="location_${internId}" value="" placeholder="e.g. Remote" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #C4C6CD; font-size: 12px; width: 100%; color: #0f172a; background-color: #fbf9fa; outline: none; box-sizing: border-box;">
             </td>
-            <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">
-                <input type="number" name="percentage_${internId}" value="100" min="0" max="100" class="form-input percentage-input-field" style="padding: 4px 4px 4px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 12px; width: 90px; color: #0f172a; background-color: #ffffff;">
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;">
+                <input type="number" name="percentage_${internId}" value="100" min="0" max="100" class="percentage-input-field" style="padding: 6px 4px 6px 10px; border-radius: 6px; border: 1px solid #C4C6CD; font-size: 12px; width: 80px; color: #0f172a; background-color: #fbf9fa; outline: none; box-sizing: border-box;">
             </td>
-            <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+            <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
                 <button type="button" onclick="removeModalAllocationRow('${internId}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; padding: 2px;">✕</button>
             </td>
         `;
@@ -254,9 +344,9 @@
         input.addEventListener('wheel', function(e) {
             if (document.activeElement === input) {
                 e.preventDefault();
-                let step = parseInt(input.getAttribute('step')) || 1;
-                let min = parseInt(input.getAttribute('min')) || 0;
-                let max = parseInt(input.getAttribute('max')) || 100;
+                let step = 1;
+                let min = 0;
+                let max = 100;
                 let val = parseInt(input.value) || 0;
                 if (e.deltaY < 0) {
                     input.value = Math.min(max, val + step);

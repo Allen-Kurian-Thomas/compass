@@ -19,6 +19,7 @@ urlpatterns = [
     path('admin-action/<int:pk>/<str:action>/', views.AdminEmployeeActionView.as_view(), name='admin_action'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/update/', views.UpdateProfileView.as_view(), name='update_profile'),
+    path('profile/submit-eod/', views.SubmitEODView.as_view(), name='submit_eod'),
     path('profile/edit/personal/', views.EditPersonalView.as_view(), name='edit_personal'),
     path('profile/edit/contact/', views.EditContactView.as_view(), name='edit_contact'),
     path('profile/edit/professional/', views.EditProfessionalView.as_view(), name='edit_professional'),

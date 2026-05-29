@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from .models import Intern, Education, Certification, DEPARTMENT_CHOICES
+from .models import Intern, Education, Certification, DEPARTMENT_CHOICES, ProgressReport
 
 
 class InternRegistrationForm(forms.ModelForm):
@@ -281,4 +281,18 @@ class CertificationForm(forms.ModelForm):
             'platform': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g. HackerRank, Coursera'}),
             'issued_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
             'credential_url': forms.URLInput(attrs={'class': 'form-input', 'placeholder': 'https://...'}),
+        }
+
+
+class ProgressReportForm(forms.ModelForm):
+    class Meta:
+        model = ProgressReport
+        fields = ['project', 'report_date', 'hours_worked', 'role', 'technology_stack', 'description']
+        widgets = {
+            'project': forms.Select(attrs={'class': 'form-control'}),
+            'report_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'hours_worked': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 8', 'step': '0.1'}),
+            'role': forms.Select(attrs={'class': 'form-control'}),
+            'technology_stack': forms.TextInput(attrs={'class': 'form-control input-with-icon', 'placeholder': 'e.g. Tailwind CSS, React, Figma'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Summarize your progress, challenges, and next steps...'}),
         }

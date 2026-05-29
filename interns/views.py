@@ -16,8 +16,9 @@ from .forms import (
     PersonalInfoForm, ContactInfoForm, ProfessionalInfoForm,
     FinancialInfoForm, StatutoryInfoForm, FamilyInfoForm,
     EducationForm, CertificationForm, UpdateProfileForm,
+    ProgressReportForm,
 )
-from .models import Intern, Education, Certification, DEPARTMENT_CHOICES, Project, RejectedCandidate
+from .models import Intern, Education, Certification, DEPARTMENT_CHOICES, Project, RejectedCandidate, ProgressReport
 from django.http import JsonResponse
 
 class CheckEmailView(View):
@@ -511,30 +512,76 @@ class AdminAddProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
         return self.request.user.is_staff or self.request.user.is_superuser or self.request.user.role == 'senior_architect'
 
+    def get(self, request, *args, **kwargs):
+        available_interns = Intern.objects.filter(status='approved', is_staff=False)
+        return render(request, 'interns/create_project.html', {
+            'available_interns': available_interns
+        })
+
     def post(self, request, *args, **kwargs):
         name = request.POST.get('name', '').strip()
         project_type = request.POST.get('project_type', 'internal').strip()
         client_department = request.POST.get('client_department', '').strip()
         timeline = request.POST.get('timeline', '').strip()
         budget = request.POST.get('budget', '').strip()
+        description = request.POST.get('description', '').strip()
+        status = request.POST.get('status', 'active').strip()
         allocated_intern_ids = request.POST.getlist('allocated_interns')
 
-        errors = {}
+        # Check if this is an AJAX request (from old modal usage)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            errors = {}
+            if not name:
+                errors['name'] = "Project name is required."
+            if errors:
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+            try:
+                project = Project.objects.create(
+                    name=name,
+                    project_type=project_type,
+                    client_department=client_department,
+                    timeline=timeline,
+                    budget=budget,
+                )
+                if allocated_intern_ids:
+                    from .models import ProjectAllocation
+                    for intern_id in allocated_intern_ids:
+                        location = request.POST.get(f'location_{intern_id}', '').strip()
+                        percentage_str = request.POST.get(f'percentage_{intern_id}', '100').strip()
+                        try:
+                            percentage = int(percentage_str)
+                        except ValueError:
+                            percentage = 100
+                        ProjectAllocation.objects.create(
+                            project=project,
+                            intern_id=intern_id,
+                            location=location,
+                            allocation_percentage=percentage
+                        )
+                return JsonResponse({'success': True, 'message': 'Project created successfully!'})
+            except Exception as e:
+                return JsonResponse({'success': False, 'errors': {'non_field_errors': str(e)}}, status=500)
+
+        # Standard form POST (page-based)
+        form_errors = []
         if not name:
-            errors['name'] = "Project name is required."
-        
-        if errors:
-            return JsonResponse({'success': False, 'errors': errors}, status=400)
-            
+            form_errors.append("Project name is required.")
+
+        if form_errors:
+            available_interns = Intern.objects.filter(status='approved', is_staff=False)
+            return render(request, 'interns/create_project.html', {
+                'available_interns': available_interns,
+                'form_errors': form_errors,
+            })
+
         try:
             project = Project.objects.create(
                 name=name,
                 project_type=project_type,
                 client_department=client_department,
                 timeline=timeline,
-                budget=budget
+                budget=budget,
             )
-            
             if allocated_intern_ids:
                 from .models import ProjectAllocation
                 for intern_id in allocated_intern_ids:
@@ -550,10 +597,14 @@ class AdminAddProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
                         location=location,
                         allocation_percentage=percentage
                     )
-                
-            return JsonResponse({'success': True, 'message': 'Project created successfully!'})
+            messages.success(request, f'Project "{name}" created successfully!')
+            return redirect('project_list')
         except Exception as e:
-            return JsonResponse({'success': False, 'errors': {'non_field_errors': str(e)}}, status=500)
+            available_interns = Intern.objects.filter(status='approved', is_staff=False)
+            return render(request, 'interns/create_project.html', {
+                'available_interns': available_interns,
+                'form_errors': [str(e)],
+            })
 
 class AdminProjectDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Project
@@ -639,3 +690,44 @@ class AdminEditProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
             return JsonResponse({'success': True, 'message': 'Project updated successfully!', 'redirect': '/admin-projects/'})
         except Exception as e:
             return JsonResponse({'success': False, 'errors': {'non_field_errors': str(e)}}, status=500)
+
+
+class SubmitEODView(LoginRequiredMixin, CreateView):
+    model = ProgressReport
+    form_class = ProgressReportForm
+    template_name = 'interns/progress_report.html'
+    success_url = reverse_lazy('submit_eod')
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Filter projects to only show active ones allocated to this intern,
+        # or all active projects if they aren't allocated to any.
+        intern = self.request.user
+        allocated_projects = Project.objects.filter(allocations__intern=intern, status='active')
+        if allocated_projects.exists():
+            form.fields['project'].queryset = allocated_projects
+        else:
+            form.fields['project'].queryset = Project.objects.filter(status='active')
+        
+        # Override project empty label
+        form.fields['project'].empty_label = "Select active project"
+        return form
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # List of past progress reports submitted by this user
+        reports_list = ProgressReport.objects.filter(intern=self.request.user).order_by('-report_date', '-created_at')
+        
+        # Pagination
+        paginator = Paginator(reports_list, 5) # Show 5 reports per page
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context['reports'] = page_obj
+        context['page_obj'] = page_obj
+        return context
+
+    def form_valid(self, form):
+        form.instance.intern = self.request.user
+        messages.success(self.request, "Progress report submitted successfully!")
+        return super().form_valid(form)
