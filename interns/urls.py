@@ -30,4 +30,5 @@ urlpatterns = [
     path('profile/education/delete/<int:pk>/', views.DeleteEducationView.as_view(), name='delete_education'),
     path('profile/certification/add/', views.AddCertificationView.as_view(), name='add_certification'),
     path('profile/certification/delete/<int:pk>/', views.DeleteCertificationView.as_view(), name='delete_certification'),
+    path('employees/search/', views.SearchEmployeesView.as_view(), name='search_employees'),
 ]

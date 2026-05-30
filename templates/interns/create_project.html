@@ -128,10 +128,34 @@
 
     .res-add-panel { display: none; }
     .res-add-panel.visible { display: block; }
-    .res-add-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
-    .res-add-select { flex: 1; padding: 10px 36px 10px 12px; border: 1px solid #C4C6CD; border-radius: 8px; font-size: 13px; color: #0f172a; background: #fbf9fa; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; font-family: inherit; box-sizing: border-box; }
-    .btn-add-intern { padding: 9px 20px; font-size: 13px; font-weight: 600; background: #2e5939; border: none; border-radius: 8px; cursor: pointer; color: #fff; font-family: inherit; white-space: nowrap; transition: background 0.2s; }
-    .btn-add-intern:hover { background: #21422a; }
+
+    /* Search / filter bar */
+    .emp-search-bar { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; margin-bottom: 20px; align-items: center; }
+    .emp-search-wrap { position: relative; }
+    .emp-search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #94a3b8; }
+    .emp-search-input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid #C4C6CD; border-radius: 8px; font-size: 13px; font-family: inherit; color: #0f172a; background: #fbf9fa; outline: none; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
+    .emp-search-input:focus { border-color: #487244; box-shadow: 0 0 0 3px rgba(72,114,68,0.12); background:#fff; }
+    .emp-filter-select { padding: 9px 32px 9px 12px; border: 1px solid #C4C6CD; border-radius: 8px; font-size: 13px; font-family: inherit; color: #0f172a; background: #fbf9fa; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+    .emp-filter-select:focus { border-color: #487244; box-shadow: 0 0 0 3px rgba(72,114,68,0.12); }
+    .btn-clear-filters { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; font-size: 13px; font-weight: 600; color: #475569; background: transparent; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; white-space: nowrap; transition: color 0.2s; }
+    .btn-clear-filters:hover { color: #ef4444; }
+
+    /* Search results */
+    .emp-results-label { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .emp-results-list { display: flex; flex-direction: column; gap: 0; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+    .emp-result-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
+    .emp-result-item:last-child { border-bottom: none; }
+    .emp-result-item:hover { background: #f8fafc; }
+    .emp-result-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
+    .emp-result-info { flex: 1; min-width: 0; }
+    .emp-result-name { font-weight: 600; font-size: 13px; color: #0f172a; }
+    .emp-result-sub { font-size: 12px; color: #64748b; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+    .emp-result-sub .dot { color: #cbd5e1; }
+    .btn-add-to-project { padding: 7px 16px; font-size: 12px; font-weight: 600; color: #2e5939; background: transparent; border: 1.5px solid #2e5939; border-radius: 7px; cursor: pointer; font-family: inherit; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; }
+    .btn-add-to-project:hover { background: #2e5939; color: #fff; }
+    .btn-add-to-project.added { background: #e8f5ea; color: #2e5939; border-color: #b7d9bc; cursor: default; }
+    .emp-no-results { text-align: center; padding: 32px 16px; color: #94a3b8; font-size: 13px; }
+    .emp-loading { text-align: center; padding: 24px; color: #94a3b8; font-size: 13px; }
 
     .team-alloc-heading { font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 14px 0; }
 
@@ -376,19 +400,41 @@
 
                             <!-- Add Employee Panel -->
                             <div class="res-add-panel" id="res-add-panel">
-                                <div class="res-add-row">
-                                    <select class="res-add-select" id="id_add_intern_select">
-                                        <option value="" disabled selected>Select employee to add...</option>
-                                        {% for intern in available_interns %}
-                                            <option value="{{ intern.id }}"
-                                                data-name="{{ intern.full_name }}"
-                                                data-empid="Emp ID: {{ intern.id }}"
-                                                data-email="{{ intern.email }}">
-                                                {{ intern.full_name }} ({{ intern.email }})
-                                            </option>
-                                        {% endfor %}
+
+                                <!-- Search & Filters -->
+                                <div class="emp-search-bar">
+                                    <div class="emp-search-wrap">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                        <input type="text" id="emp_search_input" class="emp-search-input" placeholder="Search employees..." autocomplete="off">
+                                    </div>
+                                    <select id="emp_role_filter" class="emp-filter-select">
+                                        <option value="">All Roles</option>
+                                        <option value="engineering">Engineering</option>
+                                        <option value="design">Design</option>
+                                        <option value="marketing">Marketing</option>
+                                        <option value="hr">Human Resources</option>
+                                        <option value="finance">Finance</option>
+                                        <option value="operations">Operations</option>
+                                        <option value="sales">Sales</option>
+                                        <option value="data_science">Data Science</option>
+                                        <option value="product">Product Management</option>
                                     </select>
-                                    <button type="button" class="btn-add-intern" id="btn_add_intern">+ Add</button>
+                                    <select id="emp_location_filter" class="emp-filter-select">
+                                        <option value="">All Locations</option>
+                                        <option value="Remote">Remote</option>
+                                        <option value="Onsite">Onsite</option>
+                                        <option value="Hybrid">Hybrid</option>
+                                    </select>
+                                    <button type="button" class="btn-clear-filters" id="btn_clear_filters" onclick="clearEmpFilters()">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                        Clear Filters
+                                    </button>
+                                </div>
+
+                                <!-- Results -->
+                                <div class="emp-results-label">Search Results</div>
+                                <div id="emp_results_list" class="emp-results-list">
+                                    <div class="emp-loading">Start typing to search employees…</div>
                                 </div>
                             </div>
 
@@ -442,6 +488,9 @@
     const AV_COLORS = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#f43f5e','#14b8a6','#6366f1','#f97316'];
     let avColorIdx = 0;
 
+    // Track already-added employee IDs
+    const addedEmployeeIds = new Set();
+
     function getInitials(name) {
         const parts = name.trim().split(/\s+/);
         if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -452,6 +501,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('id_creation_date_display').value = today;
+        // Load all employees initially
+        fetchEmployees();
     });
 
     // Tab switching (Details / Resources)
@@ -484,44 +535,133 @@
         }
     }
 
-    // Add intern row
-    document.getElementById('btn_add_intern').addEventListener('click', function() {
-        const select = document.getElementById('id_add_intern_select');
-        const internId = select.value;
-        if (!internId) return;
+    // ── Employee Search ─────────────────────────────────────────────
+    let searchTimeout = null;
 
-        if (document.getElementById('alloc_row_' + internId)) {
-            alert('This employee is already added.');
+    function fetchEmployees() {
+        const q = document.getElementById('emp_search_input').value.trim();
+        const role = document.getElementById('emp_role_filter').value;
+        const location = document.getElementById('emp_location_filter').value;
+
+        const list = document.getElementById('emp_results_list');
+        list.innerHTML = '<div class="emp-loading">Searching…</div>';
+
+        const params = new URLSearchParams();
+        if (q) params.set('q', q);
+        if (role) params.set('role', role);
+        if (location) params.set('location', location);
+
+        fetch(`/employees/search/?${params.toString()}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => renderResults(data.employees))
+        .catch(() => {
+            list.innerHTML = '<div class="emp-no-results">Error loading employees. Please try again.</div>';
+        });
+    }
+
+    function renderResults(employees) {
+        const list = document.getElementById('emp_results_list');
+        if (!employees || employees.length === 0) {
+            list.innerHTML = '<div class="emp-no-results">No employees found matching your search.</div>';
             return;
         }
 
-        const option  = select.options[select.selectedIndex];
-        const name    = option.getAttribute('data-name');
-        const empId   = option.getAttribute('data-empid') || ('Emp ID: ' + internId);
-        const initials = getInitials(name);
-        const avColor  = AV_COLORS[avColorIdx % AV_COLORS.length];
-        avColorIdx++;
+        list.innerHTML = '';
+        employees.forEach(emp => {
+            const initials = getInitials(emp.full_name);
+            const color = AV_COLORS[emp.id % AV_COLORS.length];
+            const isAdded = addedEmployeeIds.has(String(emp.id));
+            const subParts = [];
+            if (emp.designation) subParts.push(emp.designation);
+            if (emp.location)    subParts.push(emp.location);
+            const subText = subParts.join(' • ') || emp.email;
+
+            const item = document.createElement('div');
+            item.className = 'emp-result-item';
+            item.id = `emp_result_${emp.id}`;
+            item.innerHTML = `
+                <div class="emp-result-avatar" style="background:${color}">${initials}</div>
+                <div class="emp-result-info">
+                    <div class="emp-result-name">${escHtml(emp.full_name)}</div>
+                    <div class="emp-result-sub">${escHtml(subText)}</div>
+                </div>
+                <button type="button"
+                    class="btn-add-to-project${isAdded ? ' added' : ''}"
+                    id="addbtn_${emp.id}"
+                    onclick="addEmployeeToProject(${emp.id}, '${escJs(emp.full_name)}', '${escJs(emp.employee_id)}', '${escJs(emp.designation || emp.department)}')"
+                    ${isAdded ? 'disabled' : ''}>
+                    ${isAdded ? '✓ Added' : 'Add to Project'}
+                </button>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escJs(s) {
+        return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    }
+
+    function clearEmpFilters() {
+        document.getElementById('emp_search_input').value = '';
+        document.getElementById('emp_role_filter').value = '';
+        document.getElementById('emp_location_filter').value = '';
+        fetchEmployees();
+    }
+
+    // Debounced search on input
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('emp_search_input').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(fetchEmployees, 300);
+        });
+        document.getElementById('emp_role_filter').addEventListener('change', fetchEmployees);
+        document.getElementById('emp_location_filter').addEventListener('change', fetchEmployees);
+    });
+
+    // Add employee to allocation table
+    function addEmployeeToProject(internId, name, empId, designation) {
+        const id = String(internId);
+        if (addedEmployeeIds.has(id)) return;
+        addedEmployeeIds.add(id);
+
+        // Update button in results list
+        const btn = document.getElementById('addbtn_' + id);
+        if (btn) {
+            btn.textContent = '✓ Added';
+            btn.classList.add('added');
+            btn.disabled = true;
+        }
 
         // Remove empty state row if present
         const emptyRow = document.getElementById('empty-team-row');
         if (emptyRow) emptyRow.remove();
 
+        const initials = getInitials(name);
+        const avColor  = AV_COLORS[avColorIdx % AV_COLORS.length];
+        avColorIdx++;
+        const empLabel = empId ? `Emp ID: ${empId}` : `ID: ${id}`;
+
         const tbody = document.getElementById('allocations_tbody');
         const tr = document.createElement('tr');
-        tr.id = 'alloc_row_' + internId;
+        tr.id = 'alloc_row_' + id;
         tr.innerHTML = `
             <td>
-                <input type="hidden" name="allocated_interns" value="${internId}">
+                <input type="hidden" name="allocated_interns" value="${id}">
                 <div style="display:flex;align-items:center;gap:12px;">
                     <div class="intern-avatar" style="background:${avColor};">${initials}</div>
                     <div>
-                        <div class="iname" style="font-weight:600;color:#0f172a;font-size:13px;">${name}</div>
-                        <div class="iid" style="font-size:11px;color:#94a3b8;">${empId}</div>
+                        <div class="iname" style="font-weight:600;color:#0f172a;font-size:13px;">${escHtml(name)}</div>
+                        <div class="iid" style="font-size:11px;color:#94a3b8;">${escHtml(empLabel)}</div>
                     </div>
                 </div>
             </td>
             <td>
-                <select name="role_${internId}" class="role-select">
+                <select name="role_${id}" class="role-select">
                     <option value="Project Manager">Project Manager</option>
                     <option value="Developer">Developer</option>
                     <option value="Designer">Designer</option>
@@ -532,17 +672,17 @@
             </td>
             <td>
                 <div class="alloc-slider-cell">
-                    <input type="range" name="percentage_${internId}" min="0" max="100" value="1"
-                           class="alloc-range" id="range_${internId}"
-                           oninput="document.getElementById('pct_lbl_${internId}').textContent = this.value + '%'">
-                    <span class="alloc-pct-label" id="pct_lbl_${internId}">1%</span>
+                    <input type="range" name="percentage_${id}" min="0" max="100" value="1"
+                           class="alloc-range" id="range_${id}"
+                           oninput="document.getElementById('pct_lbl_${id}').textContent = this.value + '%'">
+                    <span class="alloc-pct-label" id="pct_lbl_${id}">1%</span>
                 </div>
             </td>
             <td>
-                <input type="text" name="location_${internId}" placeholder="e.g. Remote" class="location-input">
+                <input type="text" name="location_${id}" placeholder="e.g. Remote" class="location-input">
             </td>
             <td>
-                <button type="button" class="btn-delete-row" onclick="removeAllocRow('${internId}')" title="Remove">
+                <button type="button" class="btn-delete-row" onclick="removeAllocRow('${id}')" title="Remove">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
@@ -553,15 +693,24 @@
             </td>
         `;
         tbody.appendChild(tr);
-
-        // Switch back to Allocated view to see the member
-        switchResView('allocated');
-        select.value = '';
-    });
+    }
 
     function removeAllocRow(internId) {
-        const tr = document.getElementById('alloc_row_' + internId);
+        const id = String(internId);
+        const tr = document.getElementById('alloc_row_' + id);
         if (tr) tr.remove();
+
+        // Un-track so the employee can be re-added
+        addedEmployeeIds.delete(id);
+
+        // Restore "Add to Project" button in search results if visible
+        const btn = document.getElementById('addbtn_' + id);
+        if (btn) {
+            btn.textContent = 'Add to Project';
+            btn.classList.remove('added');
+            btn.disabled = false;
+        }
+
         const tbody = document.getElementById('allocations_tbody');
         if (tbody.children.length === 0) {
             const emptyTr = document.createElement('tr');

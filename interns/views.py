@@ -731,3 +731,54 @@ class SubmitEODView(LoginRequiredMixin, CreateView):
         form.instance.intern = self.request.user
         messages.success(self.request, "Progress report submitted successfully!")
         return super().form_valid(form)
+
+
+class SearchEmployeesView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """AJAX endpoint: returns JSON list of approved employees matching search criteria."""
+
+    def test_func(self):
+        return (
+            self.request.user.is_staff
+            or self.request.user.is_superuser
+            or self.request.user.role == 'senior_architect'
+        )
+
+    def get(self, request, *args, **kwargs):
+        q = request.GET.get('q', '').strip()
+        role_filter = request.GET.get('role', '').strip()
+        location_filter = request.GET.get('location', '').strip()
+
+        queryset = Intern.objects.filter(status='approved', is_staff=False).order_by('full_name')
+
+        if q:
+            queryset = queryset.filter(
+                Q(full_name__icontains=q) | Q(email__icontains=q) | Q(employee_id__icontains=q)
+            )
+
+        if role_filter:
+            queryset = queryset.filter(
+                Q(designation__icontains=role_filter) | Q(department__icontains=role_filter)
+            )
+
+        if location_filter:
+            queryset = queryset.filter(current_address__icontains=location_filter)
+
+        results = []
+        for intern in queryset[:30]:
+            # Build a short location label from current_address
+            location_label = ''
+            if intern.current_address:
+                parts = [p.strip() for p in intern.current_address.split(',') if p.strip()]
+                location_label = ', '.join(parts[-2:]) if len(parts) >= 2 else intern.current_address
+
+            results.append({
+                'id': intern.id,
+                'full_name': intern.full_name,
+                'email': intern.email,
+                'employee_id': intern.employee_id or '',
+                'designation': intern.designation or intern.get_department_display() if hasattr(intern, 'get_department_display') else (intern.department or ''),
+                'location': location_label,
+                'department': intern.department or '',
+            })
+
+        return JsonResponse({'employees': results})
