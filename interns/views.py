@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 import urllib.parse
+import logging
 from django.views.generic import (
     TemplateView, FormView, UpdateView, CreateView, DeleteView, View, DetailView
 )
@@ -19,7 +20,10 @@ from .forms import (
     ProgressReportForm,
 )
 from .models import Intern, Education, Certification, DEPARTMENT_CHOICES, Project, RejectedCandidate, ProgressReport
+from .cloudinary_helpers import CloudinaryHelper
 from django.http import JsonResponse
+
+logger = logging.getLogger(__name__)
 
 class CheckEmailView(View):
     def get(self, request, *args, **kwargs):
@@ -58,7 +62,14 @@ class RegisterView(FormView):
         # Manually extract fields from POST/FILES since they aren't in the form class
         intern.transaction_id = self.request.POST.get('transaction_id', '')
         if 'payment_screenshot' in self.request.FILES:
-            intern.payment_screenshot = self.request.FILES['payment_screenshot']
+            try:
+                # CloudinaryField will handle upload automatically with type='authenticated' and folder='Compass_payment'
+                intern.payment_screenshot = self.request.FILES['payment_screenshot']
+                logger.info(f"Payment screenshot upload initiated for {intern.email}")
+            except Exception as e:
+                logger.error(f"Error assigning payment screenshot for {intern.email}: {str(e)}")
+                messages.error(self.request, "An error occurred while processing the payment screenshot.")
+                return self.form_invalid(form)
         intern.save()
         messages.success(self.request, "Registration successful! Your account is pending admin approval.")
         return super().form_valid(form)
@@ -70,7 +81,9 @@ class LoginView(auth_views.LoginView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            if request.user.is_staff or request.user.is_superuser or request.user.role == 'senior_architect':
+            if request.user.role == 'senior_architect':
+                return redirect('architect_dashboard')
+            if request.user.is_staff or request.user.is_superuser or request.user.role == 'admin':
                 return redirect('admin_dashboard')
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
@@ -78,7 +91,9 @@ class LoginView(auth_views.LoginView):
     def form_valid(self, form):
         user = form.get_user()
         login(self.request, user)
-        if user.is_staff or user.is_superuser or user.role == 'senior_architect':
+        if user.role == 'senior_architect':
+            return redirect('architect_dashboard')
+        if user.is_staff or user.is_superuser or user.role == 'admin':
             return redirect('admin_dashboard')
         return redirect('home')
 
@@ -97,13 +112,39 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'interns/admin_dashboard.html'
 
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser or self.request.user.role == 'senior_architect'
+        return self.request.user.is_staff or self.request.user.is_superuser or self.request.user.role == 'admin'
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated and self.request.user.role == 'senior_architect':
+            return redirect('architect_dashboard')
+        return super().handle_no_permission()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['active_projects'] = Project.objects.filter(status='active').count()
         context['total_employees'] = Intern.objects.filter(status='approved', is_staff=False).count()
         context['recent_requests'] = Intern.objects.filter(status='pending').order_by('-date_joined')[:5]
+        context['departments'] = DEPARTMENT_CHOICES
+        context['available_interns'] = Intern.objects.filter(status='approved', is_staff=False)
+        context['recent_projects'] = Project.objects.all().select_related('lead').order_by('-created_at')[:5]
+        return context
+
+
+class ArchitectDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'interns/admin_dashboard.html'
+
+    def test_func(self):
+        return self.request.user.role == 'senior_architect'
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated and (self.request.user.is_staff or self.request.user.is_superuser or self.request.user.role == 'admin'):
+            return redirect('admin_dashboard')
+        return super().handle_no_permission()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_projects'] = Project.objects.filter(status='active').count()
+        context['total_employees'] = Intern.objects.filter(status='approved', is_staff=False).count()
         context['departments'] = DEPARTMENT_CHOICES
         context['available_interns'] = Intern.objects.filter(status='approved', is_staff=False)
         context['recent_projects'] = Project.objects.all().select_related('lead').order_by('-created_at')[:5]
@@ -151,16 +192,30 @@ class AdminEmployeeActionView(LoginRequiredMixin, UserPassesTestMixin, View):
         if action == 'approve':
             intern.status = 'approved'
             intern.save()
+            logger.info(f"Intern {intern.email} approved by admin")
         elif action == 'reject':
-            RejectedCandidate.objects.create(
-                full_name=intern.full_name,
-                email=intern.email,
-                department=intern.department,
-                transaction_id=intern.transaction_id,
-                payment_screenshot=intern.payment_screenshot,
-                date_joined=intern.date_joined
-            )
-            intern.delete()
+            try:
+                # Copy payment screenshot if it exists
+                payment_screenshot = None
+                if intern.payment_screenshot:
+                    payment_screenshot = intern.payment_screenshot
+                    logger.info(f"Copying payment screenshot for rejected candidate {intern.email}")
+                
+                RejectedCandidate.objects.create(
+                    full_name=intern.full_name,
+                    email=intern.email,
+                    department=intern.department,
+                    transaction_id=intern.transaction_id,
+                    payment_screenshot=payment_screenshot,
+                    date_joined=intern.date_joined
+                )
+                intern.delete()
+                logger.info(f"Intern {intern.email} rejected and moved to RejectedCandidate")
+                messages.success(request, f"{intern.full_name} has been rejected.")
+            except Exception as e:
+                logger.error(f"Error rejecting intern {intern.email}: {str(e)}")
+                messages.error(request, "An error occurred while rejecting the candidate.")
+                return redirect('employee_approval')
         return redirect('employee_approval')
 
 
@@ -209,6 +264,15 @@ class AdminEmployeeListView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
         context['departments'] = DEPARTMENT_CHOICES
         context['total_count'] = queryset.count()
         return context
+
+
+class AdminInternDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = Intern
+    template_name = 'interns/admin_intern_detail.html'
+    context_object_name = 'intern'
+
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser
 
 
 class AdminAddEmployeeView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -341,7 +405,13 @@ class UpdateProfileView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
     def form_valid(self, form):
-        return super().form_valid(form)
+        try:
+            # CloudinaryField will handle upload automatically with type='private' and folder='Compass_profilepic'
+            return super().form_valid(form)
+        except Exception as e:
+            logger.error(f"Error updating profile for {self.request.user.email}: {str(e)}")
+            messages.error(self.request, "An error occurred while updating your profile. Please try again.")
+            return self.form_invalid(form)
 
 
 class BaseProfileEditView(LoginRequiredMixin, UpdateView):
@@ -362,7 +432,13 @@ class BaseProfileEditView(LoginRequiredMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        return super().form_valid(form)
+        try:
+            # CloudinaryField will handle upload automatically with type='private' and folder='Compass_profilepic'
+            return super().form_valid(form)
+        except Exception as e:
+            logger.error(f"Error updating profile section {self.section} for {self.request.user.email}: {str(e)}")
+            messages.error(self.request, "An error occurred while updating your profile. Please try again.")
+            return self.form_invalid(form)
 
 
 class EditPersonalView(BaseProfileEditView):
@@ -486,8 +562,7 @@ class AdminProjectListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
             queryset = queryset.filter(
                 Q(name__icontains=search_query) |
                 Q(client_department__icontains=search_query) |
-                Q(lead__first_name__icontains=search_query) |
-                Q(lead__last_name__icontains=search_query)
+                Q(lead__full_name__icontains=search_query)
             )
             
         # Status filter
@@ -522,8 +597,8 @@ class AdminAddProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
         name = request.POST.get('name', '').strip()
         project_type = request.POST.get('project_type', 'internal').strip()
         client_department = request.POST.get('client_department', '').strip()
-        timeline = request.POST.get('timeline', '').strip()
-        budget = request.POST.get('budget', '').strip()
+        project_category = request.POST.get('project_category', '').strip()
+        tech_stack = request.POST.get('tech_stack', '').strip()
         description = request.POST.get('description', '').strip()
         status = request.POST.get('status', 'active').strip()
         allocated_intern_ids = request.POST.getlist('allocated_interns')
@@ -540,8 +615,8 @@ class AdminAddProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
                     name=name,
                     project_type=project_type,
                     client_department=client_department,
-                    timeline=timeline,
-                    budget=budget,
+                    project_category=project_category,
+                    tech_stack=tech_stack,
                 )
                 if allocated_intern_ids:
                     from .models import ProjectAllocation
@@ -579,8 +654,8 @@ class AdminAddProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
                 name=name,
                 project_type=project_type,
                 client_department=client_department,
-                timeline=timeline,
-                budget=budget,
+                project_category=project_category,
+                tech_stack=tech_stack,
             )
             if allocated_intern_ids:
                 from .models import ProjectAllocation
@@ -633,8 +708,8 @@ class AdminEditProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
         name = request.POST.get('name', '').strip()
         project_type = request.POST.get('project_type', 'internal').strip()
         client_department = request.POST.get('client_department', '').strip()
-        timeline = request.POST.get('timeline', '').strip()
-        budget = request.POST.get('budget', '').strip()
+        project_category = request.POST.get('project_category', '').strip()
+        tech_stack = request.POST.get('tech_stack', '').strip()
         status = request.POST.get('status', project.status).strip()
         lead_id = request.POST.get('lead', '').strip()
         allocated_intern_ids = request.POST.getlist('allocated_interns')
@@ -654,8 +729,8 @@ class AdminEditProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
             project.name = name
             project.project_type = project_type
             project.client_department = client_department
-            project.timeline = timeline
-            project.budget = budget
+            project.project_category = project_category
+            project.tech_stack = tech_stack
             project.status = status
 
             if lead_id:

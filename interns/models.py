@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
 from cloudinary.models import CloudinaryField
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class InternManager(BaseUserManager):
@@ -107,8 +110,8 @@ class Intern(AbstractBaseUser, PermissionsMixin):
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True)
     blood_group = models.CharField(max_length=5, choices=BLOOD_GROUP_CHOICES, blank=True)
     marital_status = models.CharField(max_length=20, choices=MARITAL_STATUS_CHOICES, blank=True)
-    profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
-    resume = models.FileField(upload_to='resumes/', blank=True, null=True)
+    profile_photo = CloudinaryField('profile_photo', type='private', folder='Compass_profilepic', blank=True, null=True)
+    resume = CloudinaryField('resume', type='authenticated', folder='Compass_resume', resource_type='raw', blank=True, null=True)
     bio = models.TextField(blank=True)
 
     # Contact
@@ -144,7 +147,7 @@ class Intern(AbstractBaseUser, PermissionsMixin):
 
     # Registration Payment
     transaction_id = models.CharField(max_length=100, blank=True)
-    payment_screenshot = CloudinaryField('payment_screenshot', type='private', blank=True, null=True)
+    payment_screenshot = CloudinaryField('payment_screenshot', type='authenticated', folder='Compass_payment', blank=True, null=True)
 
     # Technical skills (stored as comma-separated tags)
     technical_skills = models.TextField(blank=True, help_text="Comma-separated skills e.g. Python, Django")
@@ -201,24 +204,111 @@ class Intern(AbstractBaseUser, PermissionsMixin):
 
     @property
     def payment_screenshot_url(self):
+        """Generate signed URL for payment screenshot using helper method."""
         if self.payment_screenshot:
-            import cloudinary
-            import cloudinary.utils
+            from .cloudinary_helpers import CloudinaryHelper
             try:
-                conf = cloudinary.config()
-                if conf.cloud_name and conf.api_key and conf.api_secret:
-                    url, options = cloudinary.utils.cloudinary_url(
-                        self.payment_screenshot.public_id,
-                        sign_url=True,
-                        type='private'
-                    )
+                # Try authenticated type first (for new uploads)
+                url = CloudinaryHelper.generate_signed_url(
+                    self.payment_screenshot.public_id,
+                    resource_type='image',
+                    type='authenticated'
+                )
+                if url:
                     return url
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to generate authenticated URL for intern {self.email}: {str(e)}")
+            
+            # Fallback to private type (for existing uploads)
+            try:
+                url = CloudinaryHelper.generate_signed_url(
+                    self.payment_screenshot.public_id,
+                    resource_type='image',
+                    type='private'
+                )
+                if url:
+                    return url
+            except Exception as e:
+                logger.warning(f"Failed to generate private URL for intern {self.email}: {str(e)}")
+            
+            # Final fallback to default URL
             try:
                 return self.payment_screenshot.url
-            except Exception:
+            except Exception as e:
+                logger.error(f"Failed to get default URL for intern {self.email}: {str(e)}")
                 return None
+        return None
+
+    @property
+    def profile_photo_url(self):
+        """Generate signed URL for profile photo using helper method."""
+        if self.profile_photo:
+            from .cloudinary_helpers import CloudinaryHelper
+            try:
+                url = CloudinaryHelper.generate_signed_url(
+                    self.profile_photo.public_id,
+                    resource_type='image',
+                    type='private'
+                )
+                if url:
+                    return url
+            except Exception as e:
+                logger.error(f"Failed to generate signed URL for profile photo for intern {self.email}: {str(e)}")
+            # Fallback to default URL if signed URL generation fails
+            try:
+                return self.profile_photo.url
+            except Exception as e:
+                logger.error(f"Failed to get default URL for profile photo for intern {self.email}: {str(e)}")
+                return None
+        return None
+
+    @property
+    def resume_url(self):
+        """Generate signed URL for resume using helper method."""
+        if self.resume:
+            # Check if the resume is a Cloudinary resource (has public_id)
+            if hasattr(self.resume, 'public_id'):
+                from .cloudinary_helpers import CloudinaryHelper
+                try:
+                    logger.info(f"Attempting to generate signed URL for resume with public_id: {self.resume.public_id}")
+                    # Try authenticated type first (for new uploads)
+                    url = CloudinaryHelper.generate_signed_url(
+                        self.resume.public_id,
+                        resource_type='raw',
+                        type='authenticated',
+                        use_extension=True
+                    )
+                    if url:
+                        logger.info(f"Generated authenticated signed URL for resume for intern {self.email}: {url}")
+                        return url
+                except Exception as e:
+                    logger.warning(f"Failed to generate authenticated URL for resume for intern {self.email}: {str(e)}")
+
+                # Fallback to private type (for existing uploads)
+                try:
+                    url = CloudinaryHelper.generate_signed_url(
+                        self.resume.public_id,
+                        resource_type='raw',
+                        type='private',
+                        use_extension=True
+                    )
+                    if url:
+                        logger.info(f"Generated private signed URL for resume for intern {self.email}: {url}")
+                        return url
+                except Exception as e:
+                    logger.warning(f"Failed to generate private URL for resume for intern {self.email}: {str(e)}")
+            else:
+                logger.info(f"Resume does not have public_id attribute for intern {self.email}, using default URL")
+            # Fallback to default URL (for local files or if signed URL generation fails)
+            try:
+                default_url = self.resume.url
+                logger.info(f"Using default URL for resume for intern {self.email}: {default_url}")
+                return default_url
+            except Exception as e:
+                logger.error(f"Failed to get default URL for resume for intern {self.email}: {str(e)}")
+                return None
+        else:
+            logger.info(f"No resume found for intern {self.email}")
         return None
 
 
@@ -275,8 +365,8 @@ class Project(models.Model):
     client_department = models.CharField(max_length=200, blank=True)
     lead = models.ForeignKey(Intern, on_delete=models.SET_NULL, null=True, blank=True, related_name='led_projects')
     allocated_interns = models.ManyToManyField(Intern, through='ProjectAllocation', related_name='allocated_projects', blank=True)
-    timeline = models.CharField(max_length=100, blank=True)
-    budget = models.CharField(max_length=50, blank=True)
+    project_category = models.CharField(max_length=100, blank=True)
+    tech_stack = models.CharField(max_length=50, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -294,7 +384,7 @@ class RejectedCandidate(models.Model):
     email = models.EmailField()
     department = models.CharField(max_length=50, choices=DEPARTMENT_CHOICES, blank=True)
     transaction_id = models.CharField(max_length=100, blank=True)
-    payment_screenshot = CloudinaryField('payment_screenshot', type='private', blank=True, null=True)
+    payment_screenshot = CloudinaryField('payment_screenshot', type='authenticated', folder='Compass_payment', blank=True, null=True)
     date_joined = models.DateTimeField()
     date_rejected = models.DateTimeField(auto_now_add=True)
 
@@ -308,23 +398,38 @@ class RejectedCandidate(models.Model):
 
     @property
     def payment_screenshot_url(self):
+        """Generate signed URL for payment screenshot using helper method."""
         if self.payment_screenshot:
-            import cloudinary
-            import cloudinary.utils
+            from .cloudinary_helpers import CloudinaryHelper
             try:
-                conf = cloudinary.config()
-                if conf.cloud_name and conf.api_key and conf.api_secret:
-                    url, options = cloudinary.utils.cloudinary_url(
-                        self.payment_screenshot.public_id,
-                        sign_url=True,
-                        type='private'
-                    )
+                # Try authenticated type first (for new uploads)
+                url = CloudinaryHelper.generate_signed_url(
+                    self.payment_screenshot.public_id,
+                    resource_type='image',
+                    type='authenticated'
+                )
+                if url:
                     return url
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to generate authenticated URL for rejected candidate {self.email}: {str(e)}")
+            
+            # Fallback to private type (for existing uploads)
+            try:
+                url = CloudinaryHelper.generate_signed_url(
+                    self.payment_screenshot.public_id,
+                    resource_type='image',
+                    type='private'
+                )
+                if url:
+                    return url
+            except Exception as e:
+                logger.warning(f"Failed to generate private URL for rejected candidate {self.email}: {str(e)}")
+            
+            # Final fallback to default URL
             try:
                 return self.payment_screenshot.url
-            except Exception:
+            except Exception as e:
+                logger.error(f"Failed to get default URL for rejected candidate {self.email}: {str(e)}")
                 return None
         return None
 

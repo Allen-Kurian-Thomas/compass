@@ -91,8 +91,8 @@
                 <!-- Profile Hero Card -->
                 <div class="profile-hero">
                     <div class="profile-avatar-wrap">
-                        {% if intern.profile_photo %}
-                        <img src="{{ intern.profile_photo.url }}" alt="Profile Photo" class="profile-avatar-img">
+                        {% if intern.profile_photo_url %}
+                        <img src="{{ intern.profile_photo_url }}" alt="Profile Photo" class="profile-avatar-img">
                         {% else %}
                         <div class="profile-avatar-placeholder">{{ intern.full_name|first|upper }}</div>
                         {% endif %}

@@ -130,15 +130,58 @@
     .res-add-panel.visible { display: block; }
 
     /* Search / filter bar */
-    .emp-search-bar { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; margin-bottom: 20px; align-items: center; }
+    .emp-search-bar { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin-bottom: 20px; align-items: center; }
     .emp-search-wrap { position: relative; }
     .emp-search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #94a3b8; }
     .emp-search-input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid #C4C6CD; border-radius: 8px; font-size: 13px; font-family: inherit; color: #0f172a; background: #fbf9fa; outline: none; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
     .emp-search-input:focus { border-color: #487244; box-shadow: 0 0 0 3px rgba(72,114,68,0.12); background:#fff; }
-    .emp-filter-select { padding: 9px 32px 9px 12px; border: 1px solid #C4C6CD; border-radius: 8px; font-size: 13px; font-family: inherit; color: #0f172a; background: #fbf9fa; outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
-    .emp-filter-select:focus { border-color: #487244; box-shadow: 0 0 0 3px rgba(72,114,68,0.12); }
+    .emp-filter-select {
+        padding: 9px 36px 9px 12px;
+        border: 1px solid #C4C6CD;
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: inherit;
+        color: #0f172a;
+        background: #fbf9fa;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px;
+        min-width: 180px;
+    }
+    .emp-filter-select:hover {
+        background-color: #f1f5f9;
+    }
+    .emp-filter-select:focus {
+        border-color: #487244;
+        box-shadow: 0 0 0 3px rgba(72,114,68,0.12);
+        background-color: #fff;
+    }
     .btn-clear-filters { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; font-size: 13px; font-weight: 600; color: #475569; background: transparent; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; white-space: nowrap; transition: color 0.2s; }
     .btn-clear-filters:hover { color: #ef4444; }
+
+    @media (max-width: 640px) {
+        .emp-search-bar {
+            grid-template-columns: 1fr;
+            gap: 12px;
+            align-items: stretch;
+        }
+        .emp-filter-select {
+            width: 100%;
+            min-width: 100%;
+        }
+        .btn-clear-filters {
+            justify-content: center;
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            padding: 10px 14px;
+        }
+    }
 
     /* Search results */
     .emp-results-label { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
@@ -215,7 +258,7 @@
         </div>
 
         <nav class="admin-nav">
-            <a href="{% url 'admin_dashboard' %}" class="admin-nav-item">
+            <a href="{% if request.user.role == 'senior_architect' %}{% url 'architect_dashboard' %}{% else %}{% url 'admin_dashboard' %}{% endif %}" class="admin-nav-item">
                 <span class="admin-nav-icon" style="display: flex; align-items: center; justify-content: center;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </span>
@@ -341,27 +384,20 @@
                                 </div>
                                 <div class="form-field">
                                     <label>Project Category</label>
-                                    <select name="timeline" id="id_timeline">
-                                        <option value="" disabled {% if not request.POST.timeline %}selected{% endif %}>Select Category</option>
-                                        <option value="Web Development" {% if request.POST.timeline == 'Web Development' %}selected{% endif %}>Web Development</option>
-                                        <option value="Mobile App" {% if request.POST.timeline == 'Mobile App' %}selected{% endif %}>Mobile App</option>
-                                        <option value="Cloud Migration" {% if request.POST.timeline == 'Cloud Migration' %}selected{% endif %}>Cloud Migration</option>
-                                        <option value="UI/UX Design" {% if request.POST.timeline == 'UI/UX Design' %}selected{% endif %}>UI/UX Design</option>
-                                        <option value="Consulting" {% if request.POST.timeline == 'Consulting' %}selected{% endif %}>Consulting</option>
-                                    </select>
+                                    <input type="text" name="project_category" id="id_project_category" placeholder="Enter category" value="{{ request.POST.project_category|default:'' }}">
                                 </div>
                             </div>
 
                             <div class="form-grid">
                                 <div class="form-field">
-                                    <label>Technology</label>
-                                    <select name="budget" id="id_budget">
-                                        <option value="" disabled {% if not request.POST.budget %}selected{% endif %}>Select Tech Stack</option>
-                                        <option value="React, Django" {% if request.POST.budget == 'React, Django' %}selected{% endif %}>React, Django</option>
-                                        <option value="Next.js, Node.js" {% if request.POST.budget == 'Next.js, Node.js' %}selected{% endif %}>Next.js, Node.js</option>
-                                        <option value="Flutter, Firebase" {% if request.POST.budget == 'Flutter, Firebase' %}selected{% endif %}>Flutter, Firebase</option>
-                                        <option value="Figma, HTML/CSS" {% if request.POST.budget == 'Figma, HTML/CSS' %}selected{% endif %}>Figma, HTML/CSS</option>
-                                        <option value="Python, AI/ML" {% if request.POST.budget == 'Python, AI/ML' %}selected{% endif %}>Python, AI/ML</option>
+                                    <label>Tech Stack</label>
+                                    <select name="tech_stack" id="id_tech_stack">
+                                        <option value="" disabled {% if not request.POST.tech_stack %}selected{% endif %}>Select Tech Stack</option>
+                                        <option value="React, Django" {% if request.POST.tech_stack == 'React, Django' %}selected{% endif %}>React, Django</option>
+                                        <option value="Next.js, Node.js" {% if request.POST.tech_stack == 'Next.js, Node.js' %}selected{% endif %}>Next.js, Node.js</option>
+                                        <option value="Flutter, Firebase" {% if request.POST.tech_stack == 'Flutter, Firebase' %}selected{% endif %}>Flutter, Firebase</option>
+                                        <option value="Figma, HTML/CSS" {% if request.POST.tech_stack == 'Figma, HTML/CSS' %}selected{% endif %}>Figma, HTML/CSS</option>
+                                        <option value="Python, AI/ML" {% if request.POST.tech_stack == 'Python, AI/ML' %}selected{% endif %}>Python, AI/ML</option>
                                     </select>
                                 </div>
                                 <div class="form-field">
@@ -419,12 +455,7 @@
                                         <option value="data_science">Data Science</option>
                                         <option value="product">Product Management</option>
                                     </select>
-                                    <select id="emp_location_filter" class="emp-filter-select">
-                                        <option value="">All Locations</option>
-                                        <option value="Remote">Remote</option>
-                                        <option value="Onsite">Onsite</option>
-                                        <option value="Hybrid">Hybrid</option>
-                                    </select>
+
                                     <button type="button" class="btn-clear-filters" id="btn_clear_filters" onclick="clearEmpFilters()">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                                         Clear Filters
@@ -472,7 +503,6 @@
                     <!-- Footer Actions -->
                     <div class="form-actions">
                         <a href="{% url 'project_list' %}" class="btn-cancel">Cancel</a>
-                        <button type="button" class="btn-cancel" id="saveDraftBtn" onclick="saveDraft()" style="background:#f8fafc;">Save Draft</button>
                         <button type="submit" class="btn-submit" id="submitBtn">Submit Project</button>
                     </div>
                 </form>
@@ -541,7 +571,6 @@
     function fetchEmployees() {
         const q = document.getElementById('emp_search_input').value.trim();
         const role = document.getElementById('emp_role_filter').value;
-        const location = document.getElementById('emp_location_filter').value;
 
         const list = document.getElementById('emp_results_list');
         list.innerHTML = '<div class="emp-loading">Searching…</div>';
@@ -549,7 +578,6 @@
         const params = new URLSearchParams();
         if (q) params.set('q', q);
         if (role) params.set('role', role);
-        if (location) params.set('location', location);
 
         fetch(`/employees/search/?${params.toString()}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -609,7 +637,6 @@
     function clearEmpFilters() {
         document.getElementById('emp_search_input').value = '';
         document.getElementById('emp_role_filter').value = '';
-        document.getElementById('emp_location_filter').value = '';
         fetchEmployees();
     }
 
@@ -620,7 +647,6 @@
             searchTimeout = setTimeout(fetchEmployees, 300);
         });
         document.getElementById('emp_role_filter').addEventListener('change', fetchEmployees);
-        document.getElementById('emp_location_filter').addEventListener('change', fetchEmployees);
     });
 
     // Add employee to allocation table
@@ -723,10 +749,6 @@
                 </div></td>`;
             tbody.appendChild(emptyTr);
         }
-    }
-
-    function saveDraft() {
-        alert('Draft saving is not yet implemented. Use Submit Project to save.');
     }
 
     // Form submit

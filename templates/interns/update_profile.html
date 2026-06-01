@@ -245,7 +245,7 @@
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill: #fee2e2;"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
                                         </span>
                                         <span id="profile_photo_filename" style="color: #334155; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                            {% if request.user.profile_photo %}{{ request.user.profile_photo.name }}{% endif %}
+                                            {% if request.user.profile_photo %}Profile Photo{% endif %}
                                         </span>
                                     </div>
                                     <span style="cursor: pointer; color: #64748b; font-weight: bold; font-size: 14px; margin-left: 8px;" onclick="clearFile('profile_photo', event)">✕</span>
@@ -385,7 +385,7 @@
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill: #fee2e2;"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
                                         </span>
                                         <span id="resume_filename" style="color: #334155; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                            {% if request.user.resume %}{{ request.user.resume.name }}{% endif %}
+                                            {% if request.user.resume %}Resume{% endif %}
                                         </span>
                                     </div>
                                     <span style="cursor: pointer; color: #64748b; font-weight: bold; font-size: 14px; margin-left: 8px;" onclick="clearFile('resume', event)">✕</span>

@@ -88,8 +88,8 @@ class RolePermissionTestCase(TestCase):
             'name': 'Test Project',
             'project_type': 'internal',
             'client_department': 'R&D',
-            'timeline': '3 Months',
-            'budget': '5000',
+            'project_category': '3 Months',
+            'tech_stack': '5000',
             'allocated_interns': [self.intern.id],
             f'location_{self.intern.id}': 'New York',
             f'percentage_{self.intern.id}': '80'
@@ -110,8 +110,8 @@ class RolePermissionTestCase(TestCase):
             'name': 'Test Project Updated',
             'project_type': 'external',
             'client_department': 'Sales',
-            'timeline': '6 Months',
-            'budget': '10000',
+            'project_category': '6 Months',
+            'tech_stack': '10000',
             'allocated_interns': [self.intern.id],
             f'location_{self.intern.id}': 'Bangalore',
             f'percentage_{self.intern.id}': '50'
