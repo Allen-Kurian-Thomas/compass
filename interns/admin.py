@@ -28,7 +28,6 @@ class InternAdmin(UserAdmin):
         ('Contact', {'fields': ('personal_phone', 'skype_id', 'current_address', 'permanent_address')}),
         ('Professional', {'fields': ('department', 'designation', 'reporting_manager', 'primary_unit', 'total_experience', 'date_of_joining', 'technical_skills')}),
         ('Financial', {'fields': ('bank_name', 'account_number', 'ifsc_code', 'pan_number', 'aadhaar_number')}),
-        ('Statutory', {'fields': ('pf_uan', 'pf_account_number', 'passport_number')}),
         ('Family', {'fields': ('father_name', 'mother_name', 'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation')}),
         ('Permissions', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
     )

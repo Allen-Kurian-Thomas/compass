@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Employee Portal - My Projects{% endblock %}
+{% block body_class %}portal-bg{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/employee-portal.css' %}?v=2">
+<style>
+    /* ── Project Cards ─────────────────────────────────── */
+    .projects-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .project-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 24px;
+        transition: box-shadow 0.2s, transform 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .project-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #22c55e, #16a34a);
+        border-radius: 12px 0 0 12px;
+    }
+
+    .project-card.status-finished::before { background: linear-gradient(180deg, #3b82f6, #2563eb); }
+    .project-card.status-abandoned::before { background: linear-gradient(180deg, #94a3b8, #64748b); }
+
+    .project-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+    }
+
+    .project-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .project-name {
+        font-size: 17px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 4px 0;
+    }
+
+    .project-category {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .project-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .badge-active   { background: #dcfce7; color: #166534; }
+    .badge-finished { background: #dbeafe; color: #1d4ed8; }
+    .badge-abandoned{ background: #f1f5f9; color: #64748b; }
+
+    .badge-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        display: inline-block;
+    }
+
+    .project-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        padding: 16px 0;
+        border-top: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+        margin-bottom: 16px;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #475569;
+        font-weight: 500;
+    }
+
+    .meta-item svg { flex-shrink: 0; color: #94a3b8; }
+
+    .allocation-bar-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .allocation-bar-bg {
+        flex: 1;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .allocation-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+        border-radius: 99px;
+        transition: width 0.6s ease;
+    }
+
+    .allocation-pct {
+        font-size: 12px;
+        font-weight: 700;
+        color: #166534;
+        min-width: 36px;
+        text-align: right;
+    }
+
+    .tech-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .tech-tag {
+        background: #f1f5f9;
+        color: #334155;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    /* ── Empty State ────────────────────────────────────── */
+    .empty-projects {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 32px;
+        text-align: center;
+        background: #ffffff;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        margin-top: 8px;
+    }
+
+    .empty-projects-icon {
+        width: 72px; height: 72px;
+        background: #f1f5f9;
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 20px;
+        color: #94a3b8;
+    }
+
+    .empty-projects h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 8px 0;
+    }
+
+    .empty-projects p {
+        font-size: 14px;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.6;
+        max-width: 320px;
+    }
+
+    /* ── Page Header ────────────────────────────────────── */
+    .page-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .page-hero-title { margin: 0; }
+    .page-hero-title h2 {
+        font-size: 24px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 4px 0;
+    }
+    .page-hero-title p {
+        font-size: 13px;
+        color: #64748b;
+        margin: 0;
+    }
+
+    .projects-count-badge {
+        background: #f0fdf4;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="portal-layout">
+    <!-- Mobile Topbar -->
+    <header class="portal-mobile-header">
+        <button class="portal-menu-btn" onclick="togglePortalSidebar()">☰</button>
+        <span class="portal-mobile-title">My Projects</span>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="portal-sidebar" id="portalSidebar">
+        <div class="portal-brand">
+            <h1>Employee<br>Portal</h1>
+            <p>Institutional Access</p>
+        </div>
+        <nav class="portal-nav">
+            <a href="{% url 'home' %}">
+                <span class="nav-icon" style="display: flex; align-items: center; justify-content: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </span> Home
+            </a>
+            <a href="{% url 'profile' %}">
+                <span class="nav-icon" style="display: flex; align-items: center; justify-content: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </span> Profile
+            </a>
+            <a href="{% url 'my_projects' %}" class="active">
+                <span class="nav-icon" style="display: flex; align-items: center; justify-content: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                </span> My Projects
+            </a>
+            <a href="#">
+                <span class="nav-icon" style="display: flex; align-items: center; justify-content: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </span> Settings
+            </a>
+        </nav>
+
+        <a href="{% url 'logout' %}" style="margin-top: auto; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 6px; color: #475569; font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#475569';">
+            <span class="nav-icon" style="display: flex; align-items: center; justify-content: center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </span> Logout
+        </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="portal-main" style="padding-top: 32px;">
+
+        <div class="page-hero">
+            <div class="page-hero-title">
+                <h2>My Projects</h2>
+                <p>Projects you are currently allocated to</p>
+            </div>
+            {% if allocations %}
+            <span class="projects-count-badge">{{ allocations|length }} Project{{ allocations|length|pluralize }}</span>
+            {% endif %}
+        </div>
+
+        {% if allocations %}
+        <div class="projects-grid">
+            {% for alloc in allocations %}
+            {% with project=alloc.project %}
+            <div class="project-card status-{{ project.status }}">
+                <div class="project-card-top">
+                    <div>
+                        <h3 class="project-name">{{ project.name }}</h3>
+                        {% if project.project_category %}
+                        <span class="project-category">{{ project.project_category }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="project-status-badge badge-{{ project.status }}">
+                        <span class="badge-dot"></span>
+                        {{ project.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="project-meta">
+                    <div class="meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                        {{ project.get_project_type_display }}
+                    </div>
+                    {% if project.client_department %}
+                    <div class="meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        {{ project.client_department }}
+                    </div>
+                    {% endif %}
+                    {% if alloc.location %}
+                    <div class="meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        {{ alloc.location }}
+                    </div>
+                    {% endif %}
+                    {% if project.lead %}
+                    <div class="meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Lead: {{ project.lead.full_name }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Allocation % bar -->
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Allocation</span>
+                    </div>
+                    <div class="allocation-bar-wrap">
+                        <div class="allocation-bar-bg">
+                            <div class="allocation-bar-fill" style="width: {{ alloc.allocation_percentage }}%;"></div>
+                        </div>
+                        <span class="allocation-pct">{{ alloc.allocation_percentage }}%</span>
+                    </div>
+                </div>
+
+                {% if project.tech_stack %}
+                <div>
+                    <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;">Tech Stack</span>
+                    <div class="tech-tags" style="margin-top: 6px;">
+                        {% for tech in project.tech_stack.split %}
+                        <span class="tech-tag">{{ tech }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-projects">
+            <div class="empty-projects-icon">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+            </div>
+            <h3>No Projects Allocated</h3>
+            <p>You haven't been assigned to any projects yet. Your admin will allocate you to a project soon.</p>
+        </div>
+        {% endif %}
+
+    </main>
+</div>
+
+<script>
+function togglePortalSidebar() {
+    document.getElementById('portalSidebar').classList.toggle('open');
+}
+</script>
+{% endblock %}

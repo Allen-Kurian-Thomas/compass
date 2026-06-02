@@ -133,11 +133,6 @@ class Intern(AbstractBaseUser, PermissionsMixin):
     pan_number = models.CharField(max_length=20, blank=True)
     aadhaar_number = models.CharField(max_length=20, blank=True)
 
-    # Statutory
-    pf_uan = models.CharField(max_length=30, blank=True)
-    pf_account_number = models.CharField(max_length=30, blank=True)
-    passport_number = models.CharField(max_length=20, blank=True)
-
     # Family
     father_name = models.CharField(max_length=150, blank=True)
     mother_name = models.CharField(max_length=150, blank=True)

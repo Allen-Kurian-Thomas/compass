@@ -76,19 +76,48 @@ class InternLoginForm(AuthenticationForm):
         }),
     )
 
+    def clean(self):
+        # Check pending/rejected status BEFORE authenticate() runs.
+        # This ensures the right message is shown even if the password is wrong,
+        # because authenticate() returns None for wrong passwords and the
+        # confirm_login_allowed hook is never reached in that case.
+        from .models import Intern
+        username = self.cleaned_data.get('username')
+        if username:
+            try:
+                user = Intern.objects.get(email__iexact=username)
+                if not user.is_staff and not user.is_superuser:
+                    if user.status == 'pending':
+                        raise forms.ValidationError(
+                            "Your account is pending approval by an administrator. "
+                            "Please wait for approval before logging in.",
+                            code='pending_approval',
+                        )
+                    elif user.status == 'rejected':
+                        raise forms.ValidationError(
+                            "Your registration request was rejected. Please contact support.",
+                            code='rejected',
+                        )
+            except Intern.DoesNotExist:
+                pass  # Let super().clean() handle the invalid credentials error
+        return super().clean()
+
     def confirm_login_allowed(self, user):
-        super().confirm_login_allowed(user)
+        # This is a safety net — the clean() above should already have caught
+        # pending/rejected. This handles the case where authenticate() succeeds
+        # but the account still shouldn't be allowed in.
         if not user.is_staff and not user.is_superuser:
             if user.status == 'pending':
                 raise forms.ValidationError(
-                    "Your account is pending approval by an administrator.",
+                    "Your account is pending approval by an administrator. Please wait for approval before logging in.",
                     code='pending_approval',
                 )
             elif user.status == 'rejected':
                 raise forms.ValidationError(
-                    "Your registration request was rejected.",
+                    "Your registration request was rejected. Please contact support.",
                     code='rejected',
                 )
+        super().confirm_login_allowed(user)
 
 
 class PersonalInfoForm(forms.ModelForm):
@@ -169,20 +198,6 @@ class FinancialInfoForm(forms.ModelForm):
         }
 
 
-class StatutoryInfoForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.required = False
-
-    class Meta:
-        model = Intern
-        fields = ['pf_uan', 'pf_account_number', 'passport_number']
-        widgets = {
-            'pf_uan': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'PF UAN'}),
-            'pf_account_number': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'PF Account Number'}),
-            'passport_number': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Passport Number (optional)'}),
-        }
 
 
 class FamilyInfoForm(forms.ModelForm):
@@ -220,7 +235,7 @@ class UpdateProfileForm(forms.ModelForm):
             'designation', 'primary_unit', 'reporting_manager', 'total_experience',
             'bank_name', 'account_number', 'ifsc_code', 'pan_number', 'aadhaar_number',
             'father_name', 'mother_name', 'emergency_contact_name', 'emergency_contact_relation', 'emergency_contact_phone',
-            'pf_uan', 'pf_account_number', 'passport_number', 'technical_skills', 'profile_photo', 'resume',
+            'technical_skills', 'profile_photo', 'resume',
             'highest_degree', 'college_university', 'graduation_year', 'certifications_summary',
         ]
         widgets = {
@@ -247,9 +262,6 @@ class UpdateProfileForm(forms.ModelForm):
             'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
             'emergency_contact_relation': forms.TextInput(attrs={'class': 'form-control'}),
             'emergency_contact_phone': forms.TextInput(attrs={'class': 'form-control'}),
-            'pf_uan': forms.TextInput(attrs={'class': 'form-control'}),
-            'pf_account_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'passport_number': forms.TextInput(attrs={'class': 'form-control'}),
             'technical_skills': forms.TextInput(attrs={'class': 'form-control', 'id': 'skills-input'}),
             'profile_photo': forms.FileInput(attrs={'class': 'form-control'}),
             'resume': forms.FileInput(attrs={'class': 'form-control'}),

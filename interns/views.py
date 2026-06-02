@@ -15,7 +15,7 @@ from django.core.paginator import Paginator
 from .forms import (
     InternRegistrationForm, InternLoginForm,
     PersonalInfoForm, ContactInfoForm, ProfessionalInfoForm,
-    FinancialInfoForm, StatutoryInfoForm, FamilyInfoForm,
+    FinancialInfoForm, FamilyInfoForm,
     EducationForm, CertificationForm, UpdateProfileForm,
     ProgressReportForm,
 )
@@ -106,6 +106,22 @@ class LogoutView(View):
 
 class HomeView(LoginRequiredMixin, TemplateView):
     template_name = 'interns/home.html'
+
+
+class MyProjectsView(LoginRequiredMixin, TemplateView):
+    template_name = 'interns/my_projects.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from .models import ProjectAllocation
+        allocations = (
+            ProjectAllocation.objects
+            .filter(intern=self.request.user)
+            .select_related('project', 'project__lead')
+            .order_by('project__status', 'project__name')
+        )
+        context['allocations'] = allocations
+        return context
 
 
 class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
@@ -465,11 +481,6 @@ class EditFinancialView(BaseProfileEditView):
     section_icon = '🏦'
 
 
-class EditStatutoryView(BaseProfileEditView):
-    form_class = StatutoryInfoForm
-    section = 'Statutory Information'
-    section_icon = '📋'
-
 
 class EditFamilyView(BaseProfileEditView):
     form_class = FamilyInfoForm
@@ -765,6 +776,20 @@ class AdminEditProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
             return JsonResponse({'success': True, 'message': 'Project updated successfully!', 'redirect': '/admin-projects/'})
         except Exception as e:
             return JsonResponse({'success': False, 'errors': {'non_field_errors': str(e)}}, status=500)
+
+
+class AdminDeleteProjectView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff or self.request.user.is_superuser or self.request.user.role == 'senior_architect'
+
+    def post(self, request, pk, *args, **kwargs):
+        project = get_object_or_404(Project, pk=pk)
+        project_name = project.name
+        project.delete()
+        messages.success(request, f'Project "{project_name}" has been deleted.')
+        if request.user.role == 'senior_architect':
+            return redirect('architect_project_list')
+        return redirect('project_list')
 
 
 class SubmitEODView(LoginRequiredMixin, CreateView):

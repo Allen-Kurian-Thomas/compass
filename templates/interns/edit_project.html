@@ -112,6 +112,22 @@
     .btn-save { padding: 10px 22px; border: none; border-radius: 8px; background: #2e5939; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s, opacity 0.2s; }
     .btn-save:hover { background: #21422a; }
     .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-delete { padding: 10px 22px; border: 1px solid #fca5a5; border-radius: 8px; background: #fff; color: #dc2626; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; margin-right: auto; }
+    .btn-delete:hover { background: #fef2f2; border-color: #ef4444; }
+
+    /* Delete confirm modal */
+    .del-modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .del-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .del-modal { background: #fff; border-radius: 14px; padding: 32px; max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.18); transform: scale(0.95); transition: transform 0.2s; }
+    .del-modal-overlay.open .del-modal { transform: scale(1); }
+    .del-modal-icon { width: 52px; height: 52px; background: #fef2f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: #dc2626; }
+    .del-modal h3 { font-size: 18px; font-weight: 700; color: #0f172a; text-align: center; margin: 0 0 8px; }
+    .del-modal p { font-size: 14px; color: #64748b; text-align: center; margin: 0 0 24px; line-height: 1.5; }
+    .del-modal-actions { display: flex; gap: 10px; justify-content: center; }
+    .btn-del-confirm { padding: 10px 24px; background: #dc2626; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+    .btn-del-confirm:hover { background: #b91c1c; }
+    .btn-del-cancel { padding: 10px 24px; background: #fff; color: #475569; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-del-cancel:hover { background: #f1f5f9; }
 
     @media (max-width: 640px) {
         .form-grid { grid-template-columns: 1fr; }
@@ -327,6 +343,10 @@
 
                     <!-- Footer -->
                     <div class="edit-card-footer">
+                        <button type="button" class="btn-delete" id="ep_deleteBtn" onclick="openDeleteModal()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
+                            Delete Project
+                        </button>
                         <a href="{% if request.user.role == 'senior_architect' %}{% url 'architect_project_list' %}{% else %}{% url 'project_list' %}{% endif %}" class="btn-cancel" id="ep_cancel">Cancel</a>
                         <button type="submit" class="btn-save" id="ep_saveBtn">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -343,6 +363,24 @@
 
 <!-- Toast notification -->
 <div class="toast" id="ep_toast"></div>
+
+<!-- Delete Confirmation Modal -->
+<div class="del-modal-overlay" id="delModalOverlay">
+    <div class="del-modal">
+        <div class="del-modal-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4h6v2"></path></svg>
+        </div>
+        <h3>Delete Project?</h3>
+        <p>Are you sure you want to permanently delete <strong>{{ project.name }}</strong>? This will also remove all intern allocations for this project. This action cannot be undone.</p>
+        <div class="del-modal-actions">
+            <button class="btn-del-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <form method="post" action="{% url 'project_delete' project.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-del-confirm">Yes, Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 <script>
 (function () {
@@ -511,5 +549,16 @@
     // Bind scroll wheel listener to all initial elements
     document.querySelectorAll('.percentage-input-field').forEach(setupPercentageScroll);
 })();
+
+function openDeleteModal() {
+    document.getElementById('delModalOverlay').classList.add('open');
+}
+function closeDeleteModal() {
+    document.getElementById('delModalOverlay').classList.remove('open');
+}
+// Close on overlay click
+document.getElementById('delModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
 </script>
 {% endblock %}
